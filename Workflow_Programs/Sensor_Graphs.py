@@ -727,7 +727,7 @@ def plot_adjusted_linear_fits(test_range):
     plt.close()
 
 
-def plot_adjusted_linear_fits_no_offsets(test_range):
+def plot_adjusted_linear_fits_no_offsets(test_range, save_graphs=True, useArduinoADC=True):
     plt.figure(figsize=(10, 6))
     
     slopes = []
@@ -735,35 +735,54 @@ def plot_adjusted_linear_fits_no_offsets(test_range):
     # Calculate the average slope and intercept across all tests and sensors
     for _TEST_NUM in test_range:
         for sensor_num in SENSORS_RANGE:
+            # Load data from CSV files
             instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-            updated_arduino_data = pd.read_csv(
-                get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+            updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+            
+            # Extract force data
+            updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+            
+            # Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
+            aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
             
             min_length = min(len(instron_data), len(updated_arduino_data))
             instron_force = instron_data["Force [N]"].iloc[:min_length]
-            updated_arduino_adc_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[
-                                        :min_length]
+            # updated_arduino_adc_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
+            if useArduinoADC:
+                arduino_force = aligned_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
+            else:
+                arduino_force = updated_arduino_force.iloc[:min_length]
             
-            coefficients = np.polyfit(instron_force, updated_arduino_adc_force, 1)
+            coefficients = np.polyfit(instron_force, arduino_force, 1)
             slopes.append(coefficients[0])
     
     average_slope = np.mean(slopes)
+    arduino_force_type = "default"
     
     for _TEST_NUM in test_range:
         for sensor_num in SENSORS_RANGE:
-            # Read the data
+            # Load data from CSV files
             instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-            updated_arduino_data = pd.read_csv(
-                get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+            updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
             
-            # Ensure data lengths match
+            # Extract force data
+            updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+            
+            # Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
+            aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
+            
             min_length = min(len(instron_data), len(updated_arduino_data))
             instron_force = instron_data["Force [N]"].iloc[:min_length]
-            updated_arduino_adc_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[
-                                        :min_length]
+            # updated_arduino_adc_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
+            if useArduinoADC:
+                arduino_force_type = "ADC" if SIMPLIFY else f"ADC{sensor_num}"
+                arduino_force = aligned_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
+            else:
+                arduino_force_type = "Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"
+                arduino_force = updated_arduino_force.iloc[:min_length]
             
             # Fit the data
-            coefficients = np.polyfit(instron_force, updated_arduino_adc_force, 1)
+            coefficients = np.polyfit(instron_force, arduino_force, 1)
             
             # Adjust the slope and intercept based on the first loop's logic
             adjusted_slope = coefficients[0] - average_slope
@@ -779,12 +798,17 @@ def plot_adjusted_linear_fits_no_offsets(test_range):
             plt.plot(instron_force, adjusted_fit_centered, label=f"Test {_TEST_NUM}, Sensor {sensor_num}")
     
     plt.xlabel("Instron Force [N]")
-    plt.ylabel("Adjusted ADC Values Centered at Zero")
+    plt.ylabel(f"Adjusted Arduino {arduino_force_type} Centered at Zero")
     plt.legend()
     plt.title("Adjusted Linear Fits Centered at Zero Across Tests")
     plt.grid(True)
     plt.gca().invert_xaxis()
-    plt.savefig("/Users/jacobanderson/Downloads/adjusted_linear_fits_centered_at_zero.png")
+    
+    if save_graphs:
+        plt.savefig("/Users/jacobanderson/Downloads/adjusted_linear_fits_centered_at_zero.png")
+    else:
+        plt.show()
+    
     plt.close()
 
 

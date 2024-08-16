@@ -11,10 +11,10 @@ from pathlib import Path
 # Sensor set and test number
 SENSOR_SET = 1
 TEST_NUM = 9
-STARTING_SENSOR = 1
+STARTING_SENSOR = 2
 
 # Number of sensors to process
-NUM_SENSORS = 4
+NUM_SENSORS = 1
 SENSORS_RANGE = range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)
 
 # Working directory

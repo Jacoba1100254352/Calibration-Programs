@@ -39,7 +39,7 @@ SAVE_GRAPHS = True
 # graph_sensor_instron_error()
 # graph_sensor_arduino_error()
 
-STARTING_TEST = 10
+STARTING_TEST = 9
 ENDING_TEST = 13
 TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
@@ -52,7 +52,7 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 # analyze_and_graph_residuals_and_fits_individual_images(SAVE_GRAPHS)
 # analyze_and_graph_residuals_and_fits_individual_images(SAVE_GRAPHS, False)
 
-plot_adjusted_linear_fits_no_offsets(test_range=TEST_RANGE)
+plot_adjusted_linear_fits_no_offsets(test_range=TEST_RANGE, save_graphs=SAVE_GRAPHS, useArduinoADC=False)
 # plot_adjusted_linear_fits(test_range=TEST_RANGE)
 
 # Simple
