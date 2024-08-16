@@ -9,8 +9,10 @@ from pynput.mouse import Listener
 def on_click(x, y, button, pressed):
 	if pressed:
 		print(f"Mouse clicked at ({x}, {y}) with {button} at {time.time()}")
-        # Uncomment the following line if you want to log the events to a file.
-        # logging.info(f"Mouse clicked at ({x}, {y}) with {button} at {time.time()}")
+
+
+# Uncomment the following line if you want to log the events to a file.
+# logging.info(f"Mouse clicked at ({x}, {y}) with {button} at {time.time()}")
 
 
 try:

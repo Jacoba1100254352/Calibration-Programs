@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-
 from Align_Data import find_percentile_index
 from Calculate_Linear_Fit_Sensor_Calibrations import calculate_linear_fit
 
