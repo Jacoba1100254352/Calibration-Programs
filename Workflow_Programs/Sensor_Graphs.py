@@ -3,9 +3,14 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+# import tensorflow as tf
 from matplotlib.backends.backend_pdf import PdfPages
-from scipy.signal import savgol_filter
+from scipy.signal import medfilt, savgol_filter
 from scipy.stats import linregress
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
 
 from Configuration_Variables import *
 
@@ -29,31 +34,174 @@ def calculate_line_of_best_fit(x, y, isPolyfit=False, order=1):
 	return line_of_best_fit
 
 
+def build_neural_network(input_dim, layers=2, units=64):
+	"""
+	Build a simple neural network model with the specified number of layers and units.
+
+	Parameters:
+	- input_dim: Dimension of the input data.
+	- layers: Number of hidden layers in the neural network.
+	- units: Number of units in each hidden layer.
+
+	Returns:
+	- model: Compiled Keras model.
+	"""
+	model = Sequential()
+	model.add(Dense(units, input_dim=input_dim, activation='relu'))
+	
+	for _ in range(layers - 1):
+		model.add(Dense(units, activation='relu'))
+	
+	model.add(Dense(1))  # Output layer for regression
+	model.compile(optimizer='adam', loss='mse')
+	
+	return model
+
+
+from scipy.signal import savgol_filter, medfilt
+
+
+def apply_smoothing(residuals, method, window_size, poly_order):
+	"""
+	Apply smoothing to the residuals using the specified method.
+
+	Parameters:
+	- residuals: The residual data to be smoothed.
+	- method: The smoothing method ('savgol', 'boxcar', 'median', or None).
+	- window_size: The window size for the smoothing operation.
+	- poly_order: The polynomial order for Savitzky-Golay filter (only used if method is 'savgol').
+
+	Returns:
+	- smoothed_residuals: The smoothed residuals.
+	"""
+	if isinstance(residuals, pd.Series):
+		residuals = residuals.values.flatten()  # Convert Pandas Series to NumPy array and flatten
+	else:
+		residuals = residuals.flatten()  # If it's already a NumPy array, just flatten it
+	
+	if method == 'savgol':
+		if window_size is None:
+			raise ValueError("Window size must be specified for Savitzky-Golay smoothing.")
+		smoothed_residuals = savgol_filter(residuals, window_length=window_size, polyorder=poly_order)
+	elif method == 'boxcar':
+		if window_size is None:
+			raise ValueError("Window size must be specified for boxcar smoothing.")
+		smoothed_residuals = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
+		smoothed_residuals = np.pad(smoothed_residuals, (window_size // 2, window_size // 2), mode='edge')
+		if len(smoothed_residuals) > len(residuals):
+			smoothed_residuals = smoothed_residuals[:len(residuals)]
+		elif len(smoothed_residuals) < len(residuals):
+			smoothed_residuals = np.pad(smoothed_residuals, (0, len(residuals) - len(smoothed_residuals)), 'edge')
+	elif method == 'median':
+		if window_size is None:
+			raise ValueError("Window size must be specified for median filtering.")
+		if window_size % 2 == 0:  # Ensure window_size is odd
+			window_size += 1
+		smoothed_residuals = medfilt(residuals, kernel_size=window_size)
+	else:
+		smoothed_residuals = residuals
+	
+	return smoothed_residuals
+
+
+def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+	test_range, sensor_num, layers=2, units=64, epochs=100, batch_size=32, window_size=None, poly_order=2,
+	smoothing_method=None, save_graphs=True, show_graphs=True
+):
+	"""
+	Analyze and visualize residuals and neural network fits for each sensor across multiple tests,
+	combining all tests in one graph per neural network configuration, with optional smoothing.
+
+	Parameters:
+	- test_range: A range or list of test numbers to include in the analysis.
+	- sensor_num: The sensor number to analyze.
+	- layers: Number of hidden layers in the neural network.
+	- units: Number of units in each hidden layer.
+	- epochs: Number of training epochs.
+	- batch_size: Size of the training batch.
+	- window_size: Window size for the smoothing operation. If None, no smoothing is applied.
+	- poly_order: Polynomial order for the Savitzky-Golay filter.
+	- smoothing_method: The smoothing method ('savgol', 'boxcar', or None).
+	- save_graphs: Boolean flag to save the graphs as a PDF.
+	- show_graphs: Boolean flag to display the graphs during the process.
+	"""
+	scaler = StandardScaler()
+	
+	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{SENSOR_SET}_Sensor_{STARTING_SENSOR}.pdf") as pdf:
+		for layer_count in range(1, layers + 1):
+			plt.figure(figsize=(10, 6))
+			
+			for _TEST_NUM in test_range:
+				# Load data from CSV files
+				instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+				updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+				
+				# Ensure arrays are of equal length for accurate comparison
+				min_length = min(len(instron_data), len(updated_arduino_data))
+				instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+				updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[
+				                        :min_length].values.reshape(-1, 1)
+				
+				# Standardize the input data
+				instron_force_scaled = scaler.fit_transform(instron_force)
+				
+				# Build and train the neural network
+				model = build_neural_network(input_dim=1, layers=layer_count, units=units)
+				model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0)
+				
+				# Predict the fitted values
+				fitted_values = model.predict(instron_force_scaled)
+				residuals = updated_arduino_force - fitted_values
+				
+				# Apply smoothing as needed
+				residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+				
+				# Ensure instron_force and residuals_smoothed have the same length
+				instron_force_plot = instron_force[:len(residuals_smoothed)]
+				
+				plt.plot(instron_force_plot, residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
+			
+			plt.xlabel("Instron Force [N]")
+			plt.ylabel("Residual Force [N]")
+			plt.legend(loc="lower left")
+			plt.title(f"Residuals for Neural Fit (Layers {layer_count}) Across Multiple Tests")
+			plt.grid(True)
+			plt.gca().invert_xaxis()
+			
+			if show_graphs:
+				plt.show()
+			
+			if save_graphs:
+				pdf.savefig()
+			
+			plt.close()
+
+
 def graph_sensor_data(save_graphs=True):
 	"""
-    Generate and save plots comparing Instron and Arduino sensor data for each sensor,
-    including the relationship between the Instron force and the Arduino ADC values.
-    """
+	Generate and save plots comparing force measurements from the Load Cell and calibrated sensors
+	for each sensor. The plot includes the measured force over time and the difference between the two measurements.
+	"""
 	for sensor_num in SENSORS_RANGE:
 		# Load data from CSV files
 		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
-		# Extract time, force, and ADC data
+		# Extract time and force data
 		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
 		updated_arduino_time = updated_arduino_data["Time [s]"]
 		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
 		
 		# Plotting force comparison
 		plt.figure(figsize=(10, 6))
-		plt.plot(updated_arduino_time, updated_arduino_force, label="Updated Arduino Data", color="red")
-		plt.plot(instron_time, instron_force, label="Instron Data", color="blue")
+		plt.plot(updated_arduino_time, updated_arduino_force, label="Calibrated Sensor Force", color="red")
+		plt.plot(instron_time, instron_force, label="Reference Force (Load Cell)", color="blue")
 		difference = instron_force - updated_arduino_force
-		plt.plot(instron_time, difference, label="Difference (Instron - Updated Arduino)", color="green", linestyle="--")
+		plt.plot(instron_time, difference, label="Force Difference (Load Cell - Sensor)", color="green", linestyle="--")
 		plt.xlabel("Time [s]")
 		plt.ylabel("Force [N]")
 		plt.legend()
-		plt.title(f"Comparison of Force Data for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+		plt.title(f"Force Measurement Comparison")
 		plt.grid(True)
 		
 		if save_graphs:
@@ -89,17 +237,70 @@ def graph_sensor_data_difference():
 		plt.show()
 
 
+def graph_sensor_data_difference(test_range):
+	"""
+	Generate and display a single plot that compares the difference between Load Cell
+	and Calibrated Sensor data across all specified tests and sensors.
+
+	Parameters:
+	test_range (iterable): A range or list of test numbers to include in the graph.
+
+	The function reads data from CSV files, calculates the difference between Load Cell and Calibrated Sensor forces,
+	and plots the differences on a single graph, with distinct colors for each sensor and test combination.
+	"""
+	
+	# Initialize a single plot for all tests and sensors
+	plt.figure(figsize=(12, 8))
+	
+	# Generate a unique color palette
+	num_tests = len(test_range)
+	num_sensors = len(SENSORS_RANGE)
+	total_plots = num_tests * num_sensors
+	colors = sns.color_palette("hsv", total_plots)
+	
+	color_index = 0
+	
+	# Loop over each test and sensor in the specified range
+	for _TEST_NUM in test_range:
+		for sensor_num in SENSORS_RANGE:
+			# Load data from CSV files for the current sensor and test
+			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			
+			# Extract relevant columns: time and force from Load Cell and Calibrated Sensor data
+			instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
+			updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+			
+			# Calculate the difference between Load Cell and Calibrated Sensor forces
+			difference = instron_force - updated_arduino_force
+			
+			# Plot the difference between Load Cell and Calibrated Sensor forces on the same plot
+			plt.plot(instron_time, difference,
+			         label=f"Test {_TEST_NUM}",
+			         color=colors[color_index], linestyle="--")
+			
+			color_index += 1  # Increment color index for the next sensor/test combination
+	
+	# Finalize and display the combined plot
+	plt.xlabel("Time [s]")
+	plt.ylabel("Force Difference [N] (Load Cell - Sensor)")
+	plt.legend()
+	plt.title("Calibrated Sensor Force Deviation from Load Cell Baseline")
+	plt.grid(True)
+	plt.show()
+
+
 def graph_sensor_average_best_fit():
 	"""
-    Generate and save plots comparing Instron and Arduino sensor data for each sensor,
-    including the relationship between the Instron force and the Arduino ADC values.
-    """
+	Generate and save plots comparing force measurements from the Load Cell and calibrated sensors
+	for each sensor, including the calculated average force and its line of best fit.
+	"""
 	for sensor_num in SENSORS_RANGE:
 		# Load data from CSV files
 		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
-		# Extract time, force, and ADC data
+		# Extract time and force data
 		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
 		updated_arduino_time = updated_arduino_data["Time [s]"]
 		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
@@ -112,56 +313,85 @@ def graph_sensor_average_best_fit():
 		
 		# Plotting force comparison
 		plt.figure(figsize=(10, 6))
-		plt.plot(updated_arduino_time, updated_arduino_force, label="Updated Arduino Data", color="red")
-		plt.plot(instron_time, instron_force, label="Instron Data", color="blue")
+		plt.plot(updated_arduino_time, updated_arduino_force, label="Calibrated Sensor Force", color="red")
+		plt.plot(instron_time, instron_force, label="Reference Force (Load Cell)", color="blue")
 		
 		# Plotting lines of best fit
-		plt.plot(instron_time, line_of_best_fit_avg, label="Best Fit (Average Force)", color="purple", linestyle="-.")
+		plt.plot(instron_time, line_of_best_fit_avg, label="Average Force Best Fit", color="purple", linestyle="-.")
 		
 		plt.xlabel("Time [s]")
 		plt.ylabel("Force [N]")
-		plt.legend()
-		plt.title(f"Comparison of Force Data for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+		plt.legend(loc='lower left')  # Set the legend location to the bottom left
+		plt.title("Force Comparison and Average Best Fit: Calibrated Sensor vs. Baseline Load Cell")
 		plt.grid(True)
 		
 		plt.show()
 
 
-def graph_sensor_average_error():
+def graph_sensor_average_error(test_range):
 	"""
-    Generate and save plots comparing Instron and Arduino sensor data for each sensor,
-    including the relationship between the Instron force and the Arduino ADC values.
-    """
-	for sensor_num in SENSORS_RANGE:
-		# Load data from CSV files
-		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
-		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
-		
-		# Extract time, force, and ADC data
-		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
-		updated_arduino_time = updated_arduino_data["Time [s]"]
-		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
-		
-		# Calculate the average force
-		average_force = (instron_force + updated_arduino_force) / 2
-		
-		# Perform linear regression to find the line of best fit for average force
-		line_of_best_fit_avg = calculate_line_of_best_fit(instron_time, average_force)
-		
-		# Plotting force comparison
-		plt.figure(figsize=(10, 6))
-		updated_arduino_force -= line_of_best_fit_avg
-		plt.plot(updated_arduino_time, updated_arduino_force, label="Updated Arduino Error (From Combined Average)", color="red")
-		instron_force -= line_of_best_fit_avg
-		plt.plot(instron_time, instron_force, label="Instron Error (From Combined Average)", color="blue")
-		
-		plt.xlabel("Time [s]")
-		plt.ylabel("Force [N]")
-		plt.legend()
-		plt.title(f"Combined Average Error for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
-		plt.grid(True)
-		
-		plt.show()
+	Generate and display a single plot that compares Instron and Arduino sensor data
+	across all specified tests. The plot includes the relationship between the Instron force
+	and the Arduino ADC values, adjusted by the combined average error for each sensor and test.
+
+	Parameters:
+	test_range (iterable): A range or list of test numbers to include in the graph.
+
+	The function reads data from CSV files, calculates the combined average force,
+	applies a line of best fit to the average force, and plots the errors for both
+	the Instron and Arduino data on a single graph for easy comparison.
+	"""
+	
+	# Initialize a single plot for all tests
+	plt.figure(figsize=(12, 8))
+	
+	# Generate a unique color palette
+	num_tests = len(test_range)
+	num_sensors = len(SENSORS_RANGE)
+	total_plots = num_tests * num_sensors * 2  # Multiplied by 2 for Instron and Arduino plots
+	colors = sns.color_palette("hsv", total_plots)
+	
+	color_index = 0
+	
+	# Loop over each test and sensor in the specified range
+	for _TEST_NUM in test_range:
+		for sensor_num in SENSORS_RANGE:
+			# Load data from CSV files for the current sensor and test
+			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			
+			# Extract relevant columns: time and force from Instron and Arduino data
+			instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
+			updated_arduino_time = updated_arduino_data["Time [s]"]
+			updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+			
+			# Calculate the average force between Instron and Arduino data
+			average_force = (instron_force + updated_arduino_force) / 2
+			
+			# Determine the line of best fit for the average force over time
+			line_of_best_fit_avg = calculate_line_of_best_fit(instron_time, average_force)
+			
+			# Plot the error for Arduino data, adjusted by the average force line of best fit
+			updated_arduino_force -= line_of_best_fit_avg
+			plt.plot(updated_arduino_time, updated_arduino_force,
+			         label=f"Updated Arduino Error (Sensor {sensor_num}, Test {_TEST_NUM})",
+			         color=colors[color_index], alpha=0.7)
+			
+			# Plot the error for Instron data, adjusted by the average force line of best fit
+			instron_force -= line_of_best_fit_avg
+			plt.plot(instron_time, instron_force,
+			         label=f"Instron Error (Sensor {sensor_num}, Test {_TEST_NUM})",
+			         color=colors[color_index + 1], alpha=0.7)
+			
+			color_index += 2  # Increment color index for the next sensor/test combination
+	
+	# Finalize and display the plot
+	plt.xlabel("Time [s]")
+	plt.ylabel("Force [N]")
+	plt.legend()
+	plt.title(f"Combined Average Error Across Multiple Tests for {SENSOR_SET_DIR}")
+	plt.grid(True)
+	plt.show()
 
 
 def graph_sensor_instron_error():
@@ -573,13 +803,21 @@ def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
-	test_range, sensor_num, window_size=None, poly_order=2, save_graphs=True, show_graphs=True
+	test_range, sensor_num, window_size=None, poly_order=2, smoothing_method=None, save_graphs=True, show_graphs=True
 ):
 	"""
-    Analyze and visualize residuals and polynomial fits of different orders for each sensor across multiple tests,
-    combining all tests in one graph per polynomial order.
-    """
-	# Iterate over polynomial orders
+	Analyze and visualize residuals and polynomial fits of different orders for each sensor across multiple tests,
+	combining all tests in one graph per polynomial order.
+
+	Parameters:
+	- test_range: A range or list of test numbers to include in the analysis.
+	- sensor_num: The sensor number to analyze.
+	- window_size: Window size for the smoothing operation. If None, no smoothing is applied.
+	- poly_order: Polynomial order for the Savitzky-Golay filter.
+	- smoothing_method: The smoothing method ('savgol', 'boxcar', or None).
+	- save_graphs: Boolean flag to save the graphs as a PDF.
+	- show_graphs: Boolean flag to display the graphs during the process.
+	"""
 	with PdfPages(f"/Users/jacobanderson/Downloads/Combined_Tests_Polynomial_Sensor_Analysis_Sensor_Set_{SENSOR_SET}_Sensor_{STARTING_SENSOR}.pdf") as pdf:
 		for order in range(1, 5):
 			plt.figure(figsize=(10, 6))
@@ -599,19 +837,16 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				lin_fit = calculate_line_of_best_fit(x=instron_force, y=updated_arduino_force, isPolyfit=True, order=order)
 				residuals = updated_arduino_force - lin_fit
 				
-				# Optional Smoothing
-				if window_size is not None:
-					# Smooth the residuals using Savitzky-Golay filter
-					residuals_smoothed = savgol_filter(residuals, window_length=window_size, polyorder=poly_order)
-				else:
-					residuals_smoothed = residuals
+				# Apply smoothing using the specified method
+				residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 				
-				plt.plot(instron_force, residuals_smoothed, '-', label=f"Test {_TEST_NUM}, Sensor {sensor_num}", linewidth=2)
+				# Plot the smoothed residuals
+				plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
 			plt.xlabel("Instron Force [N]")
-			plt.ylabel("Calibrated Arduino Force [N] Variation")
-			plt.legend()
-			plt.title(f"Force [N] Variation for Polynomial Fit of Order {order}{f", Window Size {window_size}" if window_size is not None else ''}")
+			plt.ylabel("Residual Force [N]")
+			plt.legend(loc="lower left")
+			plt.title(f"Residuals for Polynomial Fit (Order {order}) Across Multiple Tests")
 			plt.grid(True)
 			plt.gca().invert_xaxis()
 			

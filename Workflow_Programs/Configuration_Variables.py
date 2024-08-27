@@ -10,8 +10,8 @@ from pathlib import Path
 
 # Sensor set and test number
 SENSOR_SET = 1
-TEST_NUM = 9
-STARTING_SENSOR = 2
+TEST_NUM = 12
+STARTING_SENSOR = 4
 
 # Number of sensors to process
 NUM_SENSORS = 1
@@ -81,7 +81,7 @@ def get_data_filepath(directory, sensor_num=None, copy=False, _TEST_NUM=TEST_NUM
 		if sensor_num is None:
 			raise ValueError("Sensor number must be specified for PLOTS_DIR or COEFFICIENTS_DIR")
 		else:
-			return directory / f"Calibration Test {_TEST_NUM} Sensor {sensor_num} plot{"" if not copy else " 2"}.{ext}"
+			return directory / f"Calibration Test {_TEST_NUM} Sensor {sensor_num} plot{'' if not copy else ' 2'}.{ext}"
 	
 	sensor_str = f" Sensor {sensor_num}" if sensor_num and directory != ORIGINAL_INSTRON_DIR else ""
 	return directory / f"{prefix} Calibration Test {_TEST_NUM}{sensor_str} Data.{ext}"
