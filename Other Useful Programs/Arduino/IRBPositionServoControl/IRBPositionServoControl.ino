@@ -99,16 +99,25 @@ double enaStartTime = 0.0;
 char* PID_Status = "ON";
 char* BUZ_Status = "ON";
 
+// Boxcar averaging variables
+const int boxcarSize = 10;  // Number of samples for the moving average
+double force_N_history[4][boxcarSize];  // History buffer for each sensor
+int historyIndex = 0;
 
 // 
 void setup() {
   Serial.begin(9600);
   myservo.attach(servoPin);
 
-  // 
+  //
   for (int i = 0; i < 4; i++) {
     pinMode(chipSelectPins[i], OUTPUT);
     digitalWrite(chipSelectPins[i], HIGH);
+
+    // Initialize the history buffer to zero
+    for (int j = 0; j < boxcarSize; j++) {
+      force_N_history[i][j] = 0.0;
+    }
   }
 
   //
@@ -118,7 +127,7 @@ void setup() {
   // Verify Setpoint isn't too large
   if (diastolicPressure_kPa < ABSOLUTE_MAX_SETPOINT)
     MaxSetpoint = diastolicPressure_kPa;
-  
+
   if (Setpoint > MaxSetpoint)
     Setpoint = MaxSetpoint;
 
@@ -129,7 +138,7 @@ void setup() {
   // Start the SPI library:
   SPI.begin();
 
-  // 
+  //
   myservo.write(currentPos);
 }
 
@@ -165,12 +174,12 @@ void loop() {
 
     currentPos = newPos;
   }
-  
+
   PrintToMonitor();
 }
 
 
-// 
+//
 void readSensors() {
   TotalForce_N = 0.00;
   TotalPressure_kPa = 0.00;
@@ -188,20 +197,34 @@ void readSensors() {
 
     byte1in_force = byte1in & B00111111;              // bitwise AND operation
     force_a2d[i] = (byte1in_force << 8) | (byte2in);  // bit shift operator and OR to combine all the bits of force (https://www.arduino.cc/reference/tr/language/structure/bitwise-operators/bitshiftleft/
-    force_N[i] = coeff[i][0] * force_a2d[i] + coeff[i][1];
-    if (force_N[i] < 0.00)
-      force_N[i] = 0.00;
-      
+    double raw_force = coeff[i][0] * force_a2d[i] + coeff[i][1];
+    if (raw_force < 0.00)
+      raw_force = 0.00;
+
+    // Update the history buffer
+    force_N_history[i][historyIndex] = raw_force;
+
+    // Calculate the boxcar average
+    double sum = 0.0;
+    for (int j = 0; j < boxcarSize; j++) {
+      sum += force_N_history[i][j];
+    }
+    force_N[i] = sum / boxcarSize;
+
     TotalForce_N += force_N[i];
   }
 
   TotalPressure_kPa = TotalForce_N / contactArea * 1000;
   Input = TotalPressure_kPa;
+
+  // Update history index
+  historyIndex = (historyIndex + 1) % boxcarSize;
+
   triggerAlarm();
 }
 
 
-// 
+//
 void processInput() {
   byte c = Serial.read();
   int newPos = 0;
@@ -261,12 +284,12 @@ void processInput() {
       newPos = currentPos + commandOut;
       if (newPos > maxAngle)
         newPos = maxAngle;
-      
+
       myservo.write(newPos);
       currentPos = newPos;
       break;
-    
-    
+
+
     case 'p':
       {
         double possibleSetpoint = 0.0;
@@ -275,7 +298,7 @@ void processInput() {
           if (nextdigit >= 0 && nextdigit <= 9)
             possibleSetpoint = possibleSetpoint * 10 + nextdigit;
         }
-        
+
         if (Setpoint = possibleSetpoint > MaxSetpoint)
           PrintMaxTooHigh(Setpoint = MaxSetpoint);
       }
@@ -292,7 +315,7 @@ void processInput() {
 
         if (possibleServoPos > maxAngle)
           possibleServoPos = maxAngle;
-          
+
         newPos = possibleServoPos;
         currentPos = newPos;
       }
@@ -306,7 +329,7 @@ void processInput() {
 }
 
 
-// 
+//
 bool triggerAlarm() {
 
   // Trigger alarm if band is fully extended or fully contracted
@@ -343,7 +366,7 @@ bool triggerAlarm() {
 }
 
 
-// 
+//
 void serialPrintF(const char *format, ...) {
   char buffer[128];  // Adjust buffer size if necessary
   va_list args;
@@ -354,12 +377,12 @@ void serialPrintF(const char *format, ...) {
 }
 
 
-// 
+//
 void PrintToMonitor() {
 
   // Current Time
   serialPrintF("%lu\t", millis());
-  
+
   // Status
   serialPrintF("PID %s, ", PID_Status);
   serialPrintF("Buz %s, ", BUZ_Status);
@@ -395,4 +418,3 @@ void PrintMaxTooHigh(double MaxSetpoint) {
   serialPrintF("Can't set pressure above max pressure (Can't exceed %f kPa)", MaxSetpoint);
   delay(1000);
 }
-

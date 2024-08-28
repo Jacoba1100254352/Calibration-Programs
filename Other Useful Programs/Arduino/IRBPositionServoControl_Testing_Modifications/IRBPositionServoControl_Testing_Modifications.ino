@@ -6,7 +6,7 @@ double coeff[4][2] = { { -0.00044280040320890596, 0.5050597471251378 }, { -0.000
 
 const int chipSelectPins[] = { 7, 6, 5, 4 };
 SPISettings HonewyWellFMASettings(800000, MSBFIRST, SPI_MODE0);
-double contactArea = 144;  
+double contactArea = 144;
 bool shouldReadSensors = true; // NOTE: Change to false for Serial Monitor output OR true for python->file output
 byte byte1in, byte2in;
 byte byte1in_force;
@@ -17,6 +17,11 @@ double TotalPressure_kPa = 0.00;
 
 unsigned long lastUpdate = 0;
 const unsigned long interval = 20;  // 20ms interval
+
+// Boxcar averaging variables
+const int boxcarSize = 10;  // Number of samples for the moving average
+double force_N_history[4][boxcarSize];  // History buffer for each sensor
+int historyIndex = 0;
 
 // Setting up UNIX Epoch time
 RTC_DS3231 rtc;
@@ -41,6 +46,11 @@ void setup() {
   for (int i = 0; i < 4; i++) {
     pinMode(chipSelectPins[i], OUTPUT);
     digitalWrite(chipSelectPins[i], HIGH);
+
+    // Initialize the history buffer to zero
+    for (int j = 0; j < boxcarSize; j++) {
+      force_N_history[i][j] = 0.0;
+    }
   }
 
   SPI.begin();
@@ -74,13 +84,27 @@ void readSensors() {
 
     byte1in_force = byte1in & B00111111;
     force_a2d[i] = (byte1in_force << 8) | (byte2in);
-    force_N[i] = coeff[i][0] * force_a2d[i] + coeff[i][1];
-    force_N[i] = -force_N[i]; // NOTE: Force has been calibrated to the negative force of the instron, so invert to make positive
-    if (force_N[i] < 0.00)
-      force_N[i] = 0.00;
+    double raw_force = coeff[i][0] * force_a2d[i] + coeff[i][1];
+    raw_force = -raw_force; // NOTE: Force has been calibrated to the negative force of the instron, so invert to make positive
+    if (raw_force < 0.00)
+      raw_force = 0.00;
+
+    // Update the history buffer
+    force_N_history[i][historyIndex] = raw_force;
+
+    // Calculate the boxcar average
+    double sum = 0.0;
+    for (int j = 0; j < boxcarSize; j++) {
+      sum += force_N_history[i][j];
+    }
+    force_N[i] = sum / boxcarSize;
+
     TotalForce_N += force_N[i];
   }
   TotalPressure_kPa = TotalForce_N / contactArea * 1000;
+
+  // Update history index
+  historyIndex = (historyIndex + 1) % boxcarSize;
 }
 
 void processInput() {
@@ -94,7 +118,7 @@ void PrintToMonitor() {
   String output = String(millis()) + ",\t\t";
   for (int i = 0; i < 4; i++)
     output += String(force_a2d[i], DEC) + ", ";
-  
+
   output += "\t";
   for (int i = 0; i < 4; i++)
     output += String(force_N[i], 4) + ", ";  // Limit floating point precision // Changed from 2 to 4 to match instron precision
@@ -103,4 +127,3 @@ void PrintToMonitor() {
   output += String(now.unixtime()); // Append UNIX Epoch time
   Serial.println(output);
 }
-
