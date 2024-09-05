@@ -121,7 +121,6 @@ def build_neural_network(input_dim, layers=2, units=64, activation='relu', dropo
 	return model
 
 
-# Function to analyze and graph neural fit across multiple tests
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range, sensor_num, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
@@ -131,40 +130,10 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	"""
 	Analyze and visualize residuals and neural network fits for each sensor across multiple tests,
 	combining all tests in one graph per neural network configuration, with optional smoothing.
-
-	Parameters:
-	- test_range: A range or list of test numbers to include in the analysis.
-	- sensor_num: The sensor number to analyze.
-	- layers: Number of hidden layers in the neural network. (Recommended: 1-3)
-	- units: Number of units in each hidden layer. (Recommended: 32-128)
-		# The number of neurons in each hidden layer of the neural network. (2 layers = 2*units = total neurons)
-	- activation: Activation function for hidden layers. (Recommended: 'relu', 'tanh', or 'sigmoid')
-		# Introduces non-linearity into the model, allowing it to learn and model more complex data.
-		•	ReLU: Best for most hidden layers due to efficiency and reduced vanishing gradient risk.
-		•	Tanh: Good when the data is centered or in RNNs.
-		•	Sigmoid: Typically used in output layers for binary classification tasks.
-	- dropout_rate: Dropout rate for regularization. (Recommended: 0.2-0.7)
-		# Randomly drops nodes during training to prevent overfitting.
-		# Forces the network to not rely too heavily on any particular node.
-	- l2_reg: L2 regularization parameter. (Recommended: 0.0001-0.01)
-		# Imposes penalty on high weights to discourage overfitting
-	- learning_rate: Learning rate for the optimizer. (Recommended: 0.0001-0.01)
-		# Controls how much to change the model in response to the estimated error each time the model weights are updated.
-		# It determines the step size at each iteration while moving toward a minimum of the loss function.
-	- epochs: Number of training epochs. (Recommended: 50-200)
-		# One epoch is one complete presentation of the data set to be learned to a learning machine.
-	- batch_size: Size of the training batch. (Recommended: 16-64)
-		# Smaller batch sizes (e.g., 32 or 64) often work well but can be noisy. Larger batch sizes (e.g., 128 or 256) provide smoother updates but require more memory.
-	- window_size: Window size for the smoothing operation. If None, no smoothing is applied.
-	- poly_order: Polynomial order for the Savitzky-Golay filter. (Typical: 2-3)
-	- smoothing_method: The smoothing method ('savgol', 'boxcar', 'median', or None).
-	- save_graphs: Boolean flag to save the graphs as a PDF.
-	- show_graphs: Boolean flag to display the graphs during the process.
-	- use_hyperparameter_tuning: Boolean flag to indicate whether to use hyperparameter tuning.
-	- X_train, y_train: Training data to be used for hyperparameter tuning if applicable.
 	"""
 	
-	scaler = StandardScaler()
+	input_scaler = StandardScaler()
+	output_scaler = StandardScaler()  # Scale target data as well
 	
 	if use_hyperparameter_tuning and X_train is not None and y_train is not None:
 		# Use hyperparameter tuning to find the best model
@@ -190,17 +159,21 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[
 				                        :min_length].values.reshape(-1, 1)
 				
-				# Standardize the input data
-				instron_force_scaled = scaler.fit_transform(instron_force)
+				# Standardize both input and output data
+				instron_force_scaled = input_scaler.fit_transform(instron_force)
+				updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force)
 				
 				# Train the model (if not using hyperparameter tuning)
 				if not use_hyperparameter_tuning:
 					early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
-					model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[
+					model.fit(instron_force_scaled, updated_arduino_force_scaled, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[
 						early_stopping])
 				
-				# Predict the fitted values
-				fitted_values = model.predict(instron_force_scaled)
+				# Predict the fitted values and inverse transform to original scale
+				fitted_values_scaled = model.predict(instron_force_scaled)
+				fitted_values = output_scaler.inverse_transform(fitted_values_scaled)
+				
+				# Calculate residuals and apply inverse transformation to match original scale
 				residuals = updated_arduino_force - fitted_values
 				
 				# Apply smoothing as needed
@@ -209,6 +182,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				# Ensure instron_force and residuals_smoothed have the same length
 				instron_force_plot = instron_force[:len(residuals_smoothed)]
 				
+				# Plot the residuals
 				plt.plot(instron_force_plot, residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
 			plt.xlabel("Instron Force [N]")

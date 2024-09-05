@@ -49,11 +49,11 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 # To use the function with hyperparameter tuning
-# analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-# 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1,
-# 	sensor_num=2, layers=4, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
-# 	use_hyperparameter_tuning=True, X_train=X_train, y_train=y_train
-# )
+analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1,
+	sensor_num=2, layers=4, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
+	use_hyperparameter_tuning=True, X_train=X_train, y_train=y_train
+)
 
 analyze_and_graph_neural_fit_per_test(
     test_range=TEST_RANGE, sensor_num=2, layers=2, units=128, activation='relu', dropout_rate=0.5,
