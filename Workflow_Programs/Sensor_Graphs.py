@@ -1,16 +1,20 @@
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import seaborn as sns
-# import tensorflow as tf
+from keras.callbacks import EarlyStopping
+from keras.layers import BatchNormalization, Dense, Dropout
+from keras.models import Sequential
+from keras.optimizers import Adam
+from keras.regularizers import l2
+import tensorflow as tf
+from keras.wrappers.scikit_learn import KerasRegressor
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.signal import medfilt, savgol_filter
 from scipy.stats import linregress
+from sklearn.metrics import make_scorer, mean_squared_error
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.models import Sequential
 
 from Configuration_Variables import *
 
@@ -34,33 +38,7 @@ def calculate_line_of_best_fit(x, y, isPolyfit=False, order=1):
 	return line_of_best_fit
 
 
-def build_neural_network(input_dim, layers=2, units=64):
-	"""
-	Build a simple neural network model with the specified number of layers and units.
-
-	Parameters:
-	- input_dim: Dimension of the input data.
-	- layers: Number of hidden layers in the neural network.
-	- units: Number of units in each hidden layer.
-
-	Returns:
-	- model: Compiled Keras model.
-	"""
-	model = Sequential()
-	model.add(Dense(units, input_dim=input_dim, activation='relu'))
-	
-	for _ in range(layers - 1):
-		model.add(Dense(units, activation='relu'))
-	
-	model.add(Dense(1))  # Output layer for regression
-	model.compile(optimizer='adam', loss='mse')
-	
-	return model
-
-
-from scipy.signal import savgol_filter, medfilt
-
-
+# Function to apply smoothing to residuals
 def apply_smoothing(residuals, method, window_size, poly_order):
 	"""
 	Apply smoothing to the residuals using the specified method.
@@ -104,9 +82,51 @@ def apply_smoothing(residuals, method, window_size, poly_order):
 	return smoothed_residuals
 
 
+# Function to build a neural network model
+def build_neural_network(input_dim, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01, learning_rate=0.001):
+	"""
+	Build a customizable neural network model with specified parameters.
+
+	Parameters:
+	- input_dim: Dimension of the input data.
+	- layers: Number of hidden layers in the neural network.
+	- units: Number of units in each hidden layer.
+	- activation: Activation function for hidden layers.
+	- dropout_rate: Dropout rate for regularization.
+	- l2_reg: L2 regularization parameter.
+	- learning_rate: Learning rate for the optimizer.
+
+	Returns:
+	- model: Compiled Keras model.
+	"""
+	model = Sequential()
+	model.add(Dense(units, input_dim=input_dim, activation=activation, kernel_regularizer=l2(l2_reg)))
+	model.add(Dropout(dropout_rate))
+	model.add(BatchNormalization())
+	
+	"""
+	•	L1 and L2 Regularization:
+		•	L2 Regularization (Ridge): Adds a penalty equal to the sum of the squared weights to the loss function (e.g., Dense(units, kernel_regularizer=l2(0.01))).
+		•	L1 Regularization (Lasso): Adds a penalty equal to the sum of the absolute values of the weights (e.g., Dense(units, kernel_regularizer=l1(0.01))).
+		•	Elastic Net: Combines L1 and L2 regularization.
+	"""
+	for _ in range(layers - 1):
+		model.add(Dense(units, activation=activation, kernel_regularizer=l2(l2_reg)))
+		model.add(Dropout(dropout_rate))
+		model.add(BatchNormalization())
+	
+	model.add(Dense(1))  # Output layer for regression
+	model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
+	
+	return model
+
+
+# Function to analyze and graph neural fit across multiple tests
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-	test_range, sensor_num, layers=2, units=64, epochs=100, batch_size=32, window_size=None, poly_order=2,
-	smoothing_method=None, save_graphs=True, show_graphs=True
+	test_range, sensor_num, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01,
+	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True, use_hyperparameter_tuning=False,
+	X_train=None, y_train=None
 ):
 	"""
 	Analyze and visualize residuals and neural network fits for each sensor across multiple tests,
@@ -115,17 +135,45 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	Parameters:
 	- test_range: A range or list of test numbers to include in the analysis.
 	- sensor_num: The sensor number to analyze.
-	- layers: Number of hidden layers in the neural network.
-	- units: Number of units in each hidden layer.
-	- epochs: Number of training epochs.
-	- batch_size: Size of the training batch.
+	- layers: Number of hidden layers in the neural network. (Recommended: 1-3)
+	- units: Number of units in each hidden layer. (Recommended: 32-128)
+		# The number of neurons in each hidden layer of the neural network. (2 layers = 2*units = total neurons)
+	- activation: Activation function for hidden layers. (Recommended: 'relu', 'tanh', or 'sigmoid')
+		# Introduces non-linearity into the model, allowing it to learn and model more complex data.
+		•	ReLU: Best for most hidden layers due to efficiency and reduced vanishing gradient risk.
+		•	Tanh: Good when the data is centered or in RNNs.
+		•	Sigmoid: Typically used in output layers for binary classification tasks.
+	- dropout_rate: Dropout rate for regularization. (Recommended: 0.2-0.7)
+		# Randomly drops nodes during training to prevent overfitting.
+		# Forces the network to not rely too heavily on any particular node.
+	- l2_reg: L2 regularization parameter. (Recommended: 0.0001-0.01)
+		# Imposes penalty on high weights to discourage overfitting
+	- learning_rate: Learning rate for the optimizer. (Recommended: 0.0001-0.01)
+		# Controls how much to change the model in response to the estimated error each time the model weights are updated.
+		# It determines the step size at each iteration while moving toward a minimum of the loss function.
+	- epochs: Number of training epochs. (Recommended: 50-200)
+		# One epoch is one complete presentation of the data set to be learned to a learning machine.
+	- batch_size: Size of the training batch. (Recommended: 16-64)
+		# Smaller batch sizes (e.g., 32 or 64) often work well but can be noisy. Larger batch sizes (e.g., 128 or 256) provide smoother updates but require more memory.
 	- window_size: Window size for the smoothing operation. If None, no smoothing is applied.
-	- poly_order: Polynomial order for the Savitzky-Golay filter.
-	- smoothing_method: The smoothing method ('savgol', 'boxcar', or None).
+	- poly_order: Polynomial order for the Savitzky-Golay filter. (Typical: 2-3)
+	- smoothing_method: The smoothing method ('savgol', 'boxcar', 'median', or None).
 	- save_graphs: Boolean flag to save the graphs as a PDF.
 	- show_graphs: Boolean flag to display the graphs during the process.
+	- use_hyperparameter_tuning: Boolean flag to indicate whether to use hyperparameter tuning.
+	- X_train, y_train: Training data to be used for hyperparameter tuning if applicable.
 	"""
+	
 	scaler = StandardScaler()
+	
+	if use_hyperparameter_tuning and X_train is not None and y_train is not None:
+		# Use hyperparameter tuning to find the best model
+		best_model = hyperparameter_tuning(X_train, y_train, input_dim=1)
+		model = best_model.model  # Use the best model found during hyperparameter tuning
+	else:
+		# Build and train the neural network without hyperparameter tuning
+		model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
+		                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
 	
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{SENSOR_SET}_Sensor_{STARTING_SENSOR}.pdf") as pdf:
 		for layer_count in range(1, layers + 1):
@@ -145,9 +193,11 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				# Standardize the input data
 				instron_force_scaled = scaler.fit_transform(instron_force)
 				
-				# Build and train the neural network
-				model = build_neural_network(input_dim=1, layers=layer_count, units=units)
-				model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0)
+				# Train the model (if not using hyperparameter tuning)
+				if not use_hyperparameter_tuning:
+					early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
+					model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[
+						early_stopping])
 				
 				# Predict the fitted values
 				fitted_values = model.predict(instron_force_scaled)
@@ -176,6 +226,218 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 			
 			plt.close()
 
+
+# Example usage of hyperparameter tuning with RandomizedSearchCV
+def hyperparameter_tuning(X_train, y_train, input_dim):
+	model = KerasRegressor(build_fn=build_neural_network, input_dim=input_dim, verbose=0)
+	
+	param_dist = {
+		'layers': [1, 2, 3],
+		'units': [32, 64, 128],
+		'activation': ['relu', 'tanh'],  # 'sigmoid'
+		'dropout_rate': [0.2, 0.5, 0.7],
+		'l2_reg': [0.01, 0.001, 0.0001],
+		'learning_rate': [0.01, 0.001, 0.0001],
+		'batch_size': [16, 32, 64, 128, 256],
+		'epochs': [50, 100, 200]
+	}
+	
+	random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=20, cv=3, verbose=2, scoring=make_scorer(mean_squared_error, greater_is_better=False))
+	
+	random_search_result = random_search.fit(X_train, y_train)
+	
+	# Create a DataFrame to store all results
+	results_df = pd.DataFrame(random_search_result.cv_results_)
+	
+	# Extract relevant columns and sort by rank_test_score
+	results_df = results_df[['params', 'mean_test_score', 'rank_test_score']]
+	sorted_results = results_df.sort_values(by='rank_test_score')
+	
+	# Display all sorted results
+	print("All Sorted Results:")
+	print(sorted_results)
+	
+	# Display the best parameters and score
+	print("\nBest Parameters:", random_search_result.best_params_)
+	print("Best Score:", random_search_result.best_score_)
+	
+	return random_search_result.best_estimator_
+
+
+def analyze_and_graph_neural_fit_per_test(
+	test_range, sensor_num, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01,
+	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True, use_hyperparameter_tuning=False,
+	X_train_data=None, y_train_data=None
+):
+	"""
+	Analyze and visualize residuals and neural network fits for each test by training a separate
+	neural network for each test, with optional hyperparameter tuning for each test.
+
+	Parameters:
+	- test_range: A range or list of test numbers to include in the analysis.
+	- sensor_num: The sensor number to analyze.
+	- layers: Number of hidden layers in the neural network. (Recommended: 1-3)
+	- units: Number of units in each hidden layer. (Recommended: 32-128)
+	- activation: Activation function for hidden layers. (Recommended: 'relu', 'tanh', or 'sigmoid')
+	- dropout_rate: Dropout rate for regularization. (Recommended: 0.2-0.7)
+	- l2_reg: L2 regularization parameter. (Recommended: 0.0001-0.01)
+	- learning_rate: Learning rate for the optimizer. (Recommended: 0.0001-0.01)
+	- epochs: Number of training epochs. (Recommended: 50-200)
+	- batch_size: Size of the training batch. (Recommended: 16-64)
+	- window_size: Window size for the smoothing operation. If None, no smoothing is applied.
+	- poly_order: Polynomial order for the Savitzky-Golay filter. (Typical: 2-3)
+	- smoothing_method: The smoothing method ('savgol', 'boxcar', 'median', or None).
+	- save_graphs: Boolean flag to save the graphs as a PDF.
+	- show_graphs: Boolean flag to display the graphs during the process.
+	- use_hyperparameter_tuning: Boolean flag to indicate whether to use hyperparameter tuning.
+	- X_train_data, y_train_data: Training data for hyperparameter tuning for each test.
+
+	Returns:
+	- None. Generates graphs for each test showing the residuals for the fitted neural network.
+	"""
+	
+	scaler = StandardScaler()
+	
+	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_{sensor_num}_Per_Test.pdf") as pdf:
+		for _TEST_NUM in test_range:
+			# Load data for the current test
+			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			
+			# Ensure arrays are of equal length for accurate comparison
+			min_length = min(len(instron_data), len(updated_arduino_data))
+			instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+			updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length].values.reshape(-1, 1)
+			
+			# Standardize the input data for the current test
+			instron_force_scaled = scaler.fit_transform(instron_force)
+			
+			# Optional hyperparameter tuning for each test
+			if use_hyperparameter_tuning and X_train_data is not None and y_train_data is not None:
+				best_model = hyperparameter_tuning(X_train_data, y_train_data, input_dim=1)
+				model = best_model.model
+			else:
+				# Build and train the neural network for each test using the passed values
+				model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
+				                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
+				early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
+				model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[early_stopping])
+			
+			# Predict the fitted values for the current test
+			fitted_values = model.predict(instron_force_scaled)
+			residuals = updated_arduino_force - fitted_values
+			
+			# Apply smoothing to residuals, if necessary
+			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			
+			# Ensure instron_force and residuals_smoothed have the same length
+			instron_force_plot = instron_force[:len(residuals_smoothed)]
+			
+			# Plot residuals for the current test on the same graph
+			plt.plot(instron_force_plot, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)
+		
+		# Finalize the plot
+		plt.xlabel("Instron Force [N]")
+		plt.ylabel("Residual Force [N]")
+		plt.title(f"Residuals for Neural Fit for Sensor {sensor_num} Across All Tests")
+		plt.legend(loc="lower left")
+		plt.grid(True)
+		plt.gca().invert_xaxis()
+			
+		# Show or save graphs as specified
+		if show_graphs:
+			plt.show()
+		if save_graphs:
+			pdf.savefig()
+		plt.close()
+
+
+def train_and_graph_neural_fit_per_test(
+	test_range, sensor_num, layers=6, units=164, activation='relu', learning_rate=0.001, epochs=100, batch_size=32, smoothing_method="boxcar",
+	window_size=100, poly_order=1, save_graphs=True, show_graphs=True, X_train_data=None, y_train_data=None
+):
+	"""
+	Train a neural network for each test and graph all predicted fits together on the same plot.
+
+	Parameters:
+	- test_range: A range or list of test numbers to include in the analysis.
+	- sensor_num: The sensor number to analyze.
+	- layers: Number of hidden layers in the neural network. (Fixed at 6 here for this guide)
+	- units: Number of units in each hidden layer. (Fixed at 164 here for this guide)
+	- activation: Activation function for hidden layers. ('relu' used here)
+	- learning_rate: Learning rate for the optimizer. (Recommended: 0.001)
+	- epochs: Number of training epochs. (Recommended: 50-200)
+	- batch_size: Size of the training batch. (Recommended: 16-64)
+	- save_graphs: Boolean flag to save the graph as a PDF.
+	- show_graphs: Boolean flag to display the graph during the process.
+	- X_train_data, y_train_data: Optionally passed training data for each test.
+
+	Returns:
+	- None. Generates a graph showing all fits on the same plot.
+	"""
+	
+	scaler = StandardScaler()
+	
+	# Create figure for plotting all fits together
+	plt.figure(figsize=(15, 8))
+	
+	for _TEST_NUM in test_range:
+		# Load data for the current test
+		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+		
+		# Ensure arrays are of equal length for accurate comparison
+		min_length = min(len(instron_data), len(updated_arduino_data))
+		instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[
+		                        :min_length].values.reshape(-1, 1)
+		
+		# Standardize the input data for the current test
+		instron_force_scaled = scaler.fit_transform(instron_force)
+		
+		# Build a new model for each test
+		model = tf.keras.Sequential()
+		model.add(tf.keras.layers.Dense(units=1, input_shape=([1]), activation='linear'))  # Input layer
+		for _ in range(layers):
+			model.add(tf.keras.layers.Dense(units=units, activation=activation))  # Hidden layers
+		model.add(tf.keras.layers.Dense(1))  # Output layer for regression
+		
+		# Compile the model
+		model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse')
+		
+		# Train the model on this test's data
+		model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0)
+		
+		# Predict the fitted values for the current test
+		fitted_values = model.predict(instron_force_scaled)
+		residuals = updated_arduino_force - fitted_values
+		
+		# Apply smoothing to residuals, if necessary
+		residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+		
+		# Ensure instron_force and residuals_smoothed have the same length
+		instron_force_plot = instron_force[:len(residuals_smoothed)]
+		
+		# Plot the results for this test
+		plt.plot(instron_force_plot, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)
+	
+	# Finalize the graph
+	plt.xlabel("Instron Force [N]")
+	plt.ylabel("Predicted Force [N]")
+	plt.title(f"Neural Network Fits for Sensor {sensor_num} Across Tests")
+	plt.legend(loc="lower right")
+	plt.grid(True)
+	
+	# Show or save graph as specified
+	if show_graphs:
+		plt.show()
+	if save_graphs:
+		plt.savefig(f"/Users/jacobanderson/Downloads/Neural_Fits_Sensor_{sensor_num}_All_Tests.pdf")
+	plt.close()
+	
+	print("Completed training and graphing fits for each test.")
+	
 
 def graph_sensor_data(save_graphs=True):
 	"""

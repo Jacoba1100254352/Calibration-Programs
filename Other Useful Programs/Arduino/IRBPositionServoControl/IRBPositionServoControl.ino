@@ -2,25 +2,23 @@
 //#include <PID_v1.h>
 #include <Servo.h>
 
-/************************************************************************************************************************************************************
- *        Verify these are correct before each use
- * ********************************************************************************************************************************************************/
+/***********************************************************************************************************************************************************/
+//        Verify these are correct before each use
 
 // calibration coefficients for each of the 4 sensors
-//double coeff[4][2] = {{0.000520922, -2.292482252}, {0.000521521, -2.199142256}, {0.00052048, -2.429410973}, {0.000527817, -2.472489214}}; // Roger's original
-double coeff[4][2] = { { 0.000520922, -2.083686515 }, { 0.000521521, -2.001596949 }, { 0.00052048, -2.232860712 }, { 0.000527817, -2.221581781 } };  //  Nick's
-//double coeff[4][2] = {{0.00046542, -1.7638018}, {0.00049574, -2.1423678}, {0.00050083, -2.2047336}, {0.00050177, -1.9731005}}; // has blue wire, Daniel's
+double coeff[4][2] = { { 0.00044280040320890596, -0.5050597471251378 }, { 0.0005175249382435472, -1.9120768781888338 }, { 0.0005141246242903676, -1.7785060726647088 }, { 0.0005076996083303595, -1.6477909546137066 } }; // Calibrated
 
 #define STARTING_SETPOINT 3  // (kPa) Can't exceed 10
-//#define DIASTOLIC_PRESSURE 87       // (mmHg) Set according to measured pressure. Comment out if not using
+#define DIASTOLIC_PRESSURE 78  // (mmHg) Set according to measured pressure. Comment out if not using
 
 #define PID_STARTING_PARAM false  // False to have locked position. True to have variable position.
 
+// define platform area. (not electrode area)
 //#define STARTING_CONTACT_AREA 497 // (mm^2) smaller platform
 //#define STARTING_CONTACT_AREA 645 // (mm^2) bigger platform
 //#define STARTING_CONTACT_AREA 631 // (mm^2) new platform with narrow clips
-#define STARTING_CONTACT_AREA 144  // (mm^2) tappered platform for electrodes 2 x 8 mm, 4 mm edge to edge.
-//#define STARTING_CONTACT_AREA 240 // (mm^2) tappered platform for electrodes 2 x 16 mm, 4 mm edge to edge.
+//#define STARTING_CONTACT_AREA 144  // (mm^2) tappered platform for electrodes 2 x 8 mm, 4 mm edge to edge.
+#define STARTING_CONTACT_AREA 240 // (mm^2) tappered platform for electrodes 2 x 16 mm, 4 mm edge to edge.
 //#define STARTING_CONTACT_AREA 32 // (mm^2) Pair of 2 x 8 mm electrodes.
 
 /***********************************************************************************************************************************************************/
@@ -29,8 +27,6 @@ double coeff[4][2] = { { 0.000520922, -2.083686515 }, { 0.000521521, -2.00159694
 
 #define STARTING_SERVO_POSITION 0  // 0 is fully extended
 #define TOLERANCE 0.2              // (kPa) can increase if too many oscilations.
-
-
 
 #define ABSOLUTE_MAX_SETPOINT 10  // (kPa) This must stay 10 kPa or lower according to IRB
 #define ABSOLUTE_MAX_PRESSURE 12  // (kPa) Alarm sounds if this pressure is exceeded at any time

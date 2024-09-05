@@ -39,8 +39,35 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 # Primary
 # analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE)
-# analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1, sensor_num=2, layers=3, save_graphs=SAVE_GRAPHS)
-analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, window_size=100, poly_order=1, smoothing_method='median', sensor_num=2, save_graphs=SAVE_GRAPHS)
+
+# To use the function with predefined parameters
+# for _ in range(1):
+# 	analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+# 		test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1,
+# 		sensor_num=2, layers=3, units=64, batch_size=16, l2_reg=0.001, epochs=200, learning_rate=0.0001, dropout_rate=0.2, activation="tanh", save_graphs=SAVE_GRAPHS,
+# 	)
+
+X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
+# To use the function with hyperparameter tuning
+# analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+# 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1,
+# 	sensor_num=2, layers=4, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
+# 	use_hyperparameter_tuning=True, X_train=X_train, y_train=y_train
+# )
+
+analyze_and_graph_neural_fit_per_test(
+    test_range=TEST_RANGE, sensor_num=2, layers=2, units=128, activation='relu', dropout_rate=0.5,
+    l2_reg=0.01, learning_rate=0.001, epochs=200, batch_size=32, window_size=100, poly_order=1,
+    smoothing_method="boxcar", save_graphs=SAVE_GRAPHS, show_graphs=True, use_hyperparameter_tuning=False,
+    X_train_data=X_train, y_train_data=y_train
+)
+
+# train_and_graph_neural_fit_per_test(
+#     test_range=TEST_RANGE, sensor_num=2, layers=6, units=164, activation='relu', learning_rate=0.001,
+#     epochs=200, batch_size=32, save_graphs=SAVE_GRAPHS, show_graphs=True
+# )
+
+# analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method='boxcar', window_size=700, poly_order=1, sensor_num=2, save_graphs=SAVE_GRAPHS)
 
 # Others
 # graph_sensor_average_error(test_range=TEST_RANGE)

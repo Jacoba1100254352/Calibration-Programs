@@ -1,9 +1,11 @@
-from pynput.mouse import Listener
 import logging
-import datetime
 import time
 
+from pynput.mouse import Listener
+
+
 logging.basicConfig(filename="mouse_log.txt", level=logging.INFO, format='%(asctime)s: %(message)s')
+
 
 def on_click(x, y, button, pressed):
 	if pressed:

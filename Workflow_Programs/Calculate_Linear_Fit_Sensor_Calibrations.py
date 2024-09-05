@@ -1,4 +1,3 @@
-import numpy as np
 from pandas import DataFrame, read_csv
 
 from Configuration_Variables import *

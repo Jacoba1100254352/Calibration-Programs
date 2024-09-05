@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
 
 # Test 3 sensor 2, Test 4 sensor 4, Test 5 sensor 2, Test 6 sensor 2, Test 7 sensor 2,
 
@@ -85,3 +88,29 @@ def get_data_filepath(directory, sensor_num=None, copy=False, _TEST_NUM=TEST_NUM
 	
 	sensor_str = f" Sensor {sensor_num}" if sensor_num and directory != ORIGINAL_INSTRON_DIR else ""
 	return directory / f"{prefix} Calibration Test {_TEST_NUM}{sensor_str} Data.{ext}"
+
+
+def getTrainingData(_sensor_num, _TEST_RANGE):
+	X_train = []
+	y_train = []
+	
+	# Combine data from multiple tests into single X_train and y_train
+	for _TEST_NUM in _TEST_RANGE:
+		# Load data from CSV files
+		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num=_sensor_num, _TEST_NUM=_TEST_NUM))
+		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num=_sensor_num, _TEST_NUM=_TEST_NUM))
+		
+		# Ensure arrays are of equal length for accurate comparison
+		min_length = min(len(instron_data), len(updated_arduino_data))
+		instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force2 [N]"].iloc[:min_length].values.reshape(-1, 1)
+		
+		# Append to X_train and y_train
+		X_train.append(instron_force)
+		y_train.append(updated_arduino_force)
+	
+	# Convert lists to numpy arrays
+	X_train = np.vstack(X_train)
+	y_train = np.vstack(y_train)
+	
+	return X_train, y_train
