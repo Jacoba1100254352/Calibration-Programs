@@ -2,12 +2,12 @@ import time
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import tensorflow as tf
 from keras.callbacks import EarlyStopping
 from keras.layers import BatchNormalization, Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.regularizers import l2
-import tensorflow as tf
 from keras.wrappers.scikit_learn import KerasRegressor
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.signal import medfilt, savgol_filter
@@ -130,10 +130,15 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	"""
 	Analyze and visualize residuals and neural network fits for each sensor across multiple tests,
 	combining all tests in one graph per neural network configuration, with optional smoothing.
+	Also, apply a first-order fit (linear regression) to remove any general slope from the residuals.
+	Two separate plots will be generated: one for the original residuals, and one for slope-corrected residuals.
 	"""
 	
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()  # Scale target data as well
+	
+	combined_instron_force = []  # Use a list explicitly
+	combined_residuals = []  # Use a list explicitly
 	
 	if use_hyperparameter_tuning and X_train is not None and y_train is not None:
 		# Use hyperparameter tuning to find the best model
@@ -146,8 +151,8 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{SENSOR_SET}_Sensor_{STARTING_SENSOR}.pdf") as pdf:
 		for layer_count in range(1, layers + 1):
+			# Original Residuals Plot
 			plt.figure(figsize=(10, 6))
-			
 			for _TEST_NUM in test_range:
 				# Load data from CSV files
 				instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
@@ -176,19 +181,73 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				# Calculate residuals and apply inverse transformation to match original scale
 				residuals = updated_arduino_force - fitted_values
 				
+				# Ensure consistent lengths between instron_force and residuals before concatenating
+				if len(instron_force) == len(residuals):
+					# Ensure combined_instron_force is a list
+					if isinstance(combined_instron_force, np.ndarray):
+						combined_instron_force = combined_instron_force.tolist()
+					
+					# Convert instron_force to a list if it's an ndarray
+					if isinstance(instron_force, np.ndarray):
+						instron_force = instron_force.flatten().tolist()
+					
+					combined_instron_force.extend(instron_force)
+					
+					# Ensure combined_residuals is a list
+					if isinstance(combined_residuals, np.ndarray):
+						combined_residuals = combined_residuals.tolist()
+					
+					# Convert residuals to a list and extend combined_residuals
+					combined_residuals.extend(residuals.flatten().tolist())
+				else:
+					print(f"Length mismatch in Test {_TEST_NUM}: instron_force({len(instron_force)}) != residuals({len(residuals)})")
+				
 				# Apply smoothing as needed
 				residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 				
 				# Ensure instron_force and residuals_smoothed have the same length
 				instron_force_plot = instron_force[:len(residuals_smoothed)]
 				
-				# Plot the residuals
+				# Plot the original residuals
 				plt.plot(instron_force_plot, residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
+			# Original Residuals Plot: Finalize and display/save
 			plt.xlabel("Instron Force [N]")
 			plt.ylabel("Residual Force [N]")
 			plt.legend(loc="lower left")
-			plt.title(f"Residuals for Neural Fit (Layers {layer_count}) Across Multiple Tests")
+			plt.title(f"Original Residuals for Neural Fit (Layers {layer_count}) Across Multiple Tests")
+			plt.grid(True)
+			plt.gca().invert_xaxis()
+			
+			if show_graphs:
+				plt.show()
+			
+			if save_graphs:
+				pdf.savefig()
+			
+			plt.close()
+			
+			# Slope-Corrected Residuals Plot
+			plt.figure(figsize=(10, 6))
+			
+			# Convert combined lists to NumPy arrays
+			combined_instron_force = np.array(combined_instron_force)
+			combined_residuals = np.array(combined_residuals)
+			
+			# Perform linear regression to find the slope of the combined data
+			slope, intercept = np.polyfit(combined_instron_force, combined_residuals, 1)
+			line_of_best_fit = slope * combined_instron_force + intercept
+			
+			# Subtract the slope from the residuals
+			adjusted_residuals = combined_residuals - line_of_best_fit
+			
+			# Plot the adjusted residuals (without the slope)
+			plt.plot(combined_instron_force, adjusted_residuals, 'k--', label="Adjusted Residuals (Slope Removed)", linewidth=2)
+			
+			plt.xlabel("Instron Force [N]")
+			plt.ylabel("Adjusted Residual Force [N]")
+			plt.legend(loc="lower left")
+			plt.title(f"Adjusted Residuals for Neural Fit (Layers {layer_count}) with Slope Correction")
 			plt.grid(True)
 			plt.gca().invert_xaxis()
 			
@@ -282,7 +341,8 @@ def analyze_and_graph_neural_fit_per_test(
 			# Ensure arrays are of equal length for accurate comparison
 			min_length = min(len(instron_data), len(updated_arduino_data))
 			instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
-			updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length].values.reshape(-1, 1)
+			updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[
+			                        :min_length].values.reshape(-1, 1)
 			
 			# Standardize the input data for the current test
 			instron_force_scaled = scaler.fit_transform(instron_force)
@@ -296,7 +356,8 @@ def analyze_and_graph_neural_fit_per_test(
 				model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
 				                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
 				early_stopping = EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
-				model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[early_stopping])
+				model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0, callbacks=[
+					early_stopping])
 			
 			# Predict the fitted values for the current test
 			fitted_values = model.predict(instron_force_scaled)
@@ -318,7 +379,7 @@ def analyze_and_graph_neural_fit_per_test(
 		plt.legend(loc="lower left")
 		plt.grid(True)
 		plt.gca().invert_xaxis()
-			
+		
 		# Show or save graphs as specified
 		if show_graphs:
 			plt.show()
@@ -328,7 +389,8 @@ def analyze_and_graph_neural_fit_per_test(
 
 
 def train_and_graph_neural_fit_per_test(
-	test_range, sensor_num, layers=6, units=164, activation='relu', learning_rate=0.001, epochs=100, batch_size=32, smoothing_method="boxcar",
+	test_range, sensor_num, layers=6, units=164, activation='relu', learning_rate=0.001, epochs=100, batch_size=32,
+	smoothing_method="boxcar",
 	window_size=100, poly_order=1, save_graphs=True, show_graphs=True, X_train_data=None, y_train_data=None
 ):
 	"""
@@ -411,7 +473,7 @@ def train_and_graph_neural_fit_per_test(
 	plt.close()
 	
 	print("Completed training and graphing fits for each test.")
-	
+
 
 def graph_sensor_data(save_graphs=True):
 	"""

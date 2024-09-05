@@ -4,23 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Adding Boxcar averaging to the servo code">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/IRBPositionServoControl/IRBPositionServoControl.ino" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Arduino/IRBPositionServoControl/IRBPositionServoControl.ino" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms/rtcSync.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms/rtcSync.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/clickTest.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/clickTest.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/clickTest2.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/clickTest2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/display_faulty_rtc_time_difference.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/display_faulty_rtc_time_difference.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/simplerRTCSync.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/simplerRTCSync.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/test2.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms/test2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Calculate_Linear_Fit_Sensor_Calibrations.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Calculate_Linear_Fit_Sensor_Calibrations.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
-    </list>
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -95,7 +79,9 @@
       <workItem from="1724695407640" duration="5204000" />
       <workItem from="1724784188345" duration="22955000" />
       <workItem from="1724993289367" duration="22809000" />
-      <workItem from="1725475775027" duration="3279000" />
+      <workItem from="1725475775027" duration="12470000" />
+      <workItem from="1725545711894" duration="26000" />
+      <workItem from="1725545752662" duration="130000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -153,7 +139,23 @@
       <option name="project" value="LOCAL" />
       <updated>1724879031783</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Adding more Neural Fit graphing functions">
+      <option name="closed" value="true" />
+      <created>1725504253599</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1725504253599</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests">
+      <option name="closed" value="true" />
+      <created>1725507426455</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1725507426455</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -174,10 +176,12 @@
     <MESSAGE value="Adding additional programs for calibration workflow" />
     <MESSAGE value="Adding RTC calibration programs" />
     <MESSAGE value="Adding Boxcar averaging to the servo code" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding Boxcar averaging to the servo code" />
+    <MESSAGE value="Adding more Neural Fit graphing functions" />
+    <MESSAGE value="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1723778086893" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1725479362292" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1725479403393" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1725507973698" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
   </component>
 </project>

@@ -1,24 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-    <option name="sdkName" value="/opt/homebrew/Caskroom/miniconda/base" />
-  </component>
-  <component name="ProjectInspectionProfilesVisibleTreeState">
-    <entry key="Project Default">
-      <profile-state>
-        <expanded-state>
-          <State />
-          <State>
-            <id>Internationalization</id>
-          </State>
-        </expanded-state>
-        <selected-state>
-          <State>
-            <id>EditorConfig</id>
-          </State>
-        </selected-state>
-      </profile-state>
-    </entry>
+    <option name="sdkName" value="Calibration_Programs_10" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Calibration_Programs_10" project-jdk-type="Python SDK" />
 </project>
