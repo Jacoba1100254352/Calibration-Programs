@@ -13,12 +13,15 @@ import pandas as pd
 
 # Sensor set and test number
 SENSOR_SET = 1
-TEST_NUM = 12
+TEST_NUM = 21
 STARTING_SENSOR = 4
 
 # Number of sensors to process
 NUM_SENSORS = 1
 SENSORS_RANGE = range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)
+
+# This should remain constant (non-configurable)
+TOTAL_NUM_SENSORS = 4
 
 # Working directory
 WORKING_DIR = Path("../../Calibration Tests")

@@ -49,8 +49,15 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 # To use the function with hyperparameter tuning
+
+analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
+	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
+	use_hyperparameter_tuning=False, X_train=X_train, y_train=y_train
+)
+
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-# 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=1,
+# 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
 # 	sensor_num=2, layers=4, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
 # 	use_hyperparameter_tuning=False, X_train=X_train, y_train=y_train
 # )
@@ -59,7 +66,7 @@ X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 #     test_range=TEST_RANGE,
 #     smoothing_method="boxcar",
 #     window_size=100,
-#     poly_order=1,
+#     poly_order=None,
 #     sensor_num=2,
 #     layers=4,  # Higher than best tuning results, consider if necessary
 #     units=128,  # Consistent with the best results
@@ -75,24 +82,24 @@ X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 #     y_train=y_train
 # )
 
-analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-    test_range=TEST_RANGE,
-    smoothing_method="boxcar",
-    window_size=100,
-    poly_order=None,
-    sensor_num=2,
-    layers=1,  # Adjusted based on best scores
-    units=128,  # Kept at 128 based on good performance
-    batch_size=32,  # Reduced based on best parameters
-    save_graphs=SAVE_GRAPHS,
-    use_hyperparameter_tuning=False,  # Consider enabling tuning
-    X_train=X_train,
-    y_train=y_train,
-    dropout_rate=0.2,  # Added based on tuning results
-    l2_reg=0.0001,  # Added based on tuning results
-    epochs=100,  # Specified based on typical good performance
-    activation='tanh'  # Ensuring usage of 'tanh' as it performed well
-)
+# analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+#     test_range=TEST_RANGE,
+#     smoothing_method="boxcar",
+#     window_size=100,
+#     poly_order=None,
+#     sensor_num=2,
+#     layers=1,  # Adjusted based on best scores
+#     units=128,  # Kept at 128 based on good performance
+#     batch_size=32,  # Reduced based on best parameters
+#     save_graphs=SAVE_GRAPHS,
+#     use_hyperparameter_tuning=False,  # Consider enabling tuning
+#     X_train=X_train,
+#     y_train=y_train,
+#     dropout_rate=0.2,  # Added based on tuning results
+#     l2_reg=0.0001,  # Added based on tuning results
+#     epochs=100,  # Specified based on typical good performance
+#     activation='tanh'  # Ensuring usage of 'tanh' as it performed well
+# )
 
 # analyze_and_graph_neural_fit_per_test(
 # 	test_range=TEST_RANGE, sensor_num=2, layers=2, units=128, activation='relu', dropout_rate=0.5,

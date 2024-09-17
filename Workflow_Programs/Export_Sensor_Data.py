@@ -16,7 +16,7 @@ from Configuration_Variables import get_data_filepath, ORIGINAL_ARDUINO_DIR
 # Modify the port and baud rate as per your setup
 PORT = "/dev/cu.usbserial-10"  # "/dev/cu.usbserial-1420"  # On Windows, this is usually "COMX" where X is a number. # On Mac/Linux, it might be "/dev/ttyUSB0" or similar.
 BAUD_RATE = 57600
-SENSOR_NUM = 2
+SENSOR_NUM = "Test"
 OUTPUT_FILE = get_data_filepath(ORIGINAL_ARDUINO_DIR, SENSOR_NUM)
 
 
