@@ -4,129 +4,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
 from keras.callbacks import EarlyStopping
-from keras.layers import BatchNormalization, Dense, Dropout
-from keras.models import Sequential
-from keras.optimizers import Adam
-from keras.regularizers import l2
-from keras.wrappers.scikit_learn import KerasRegressor
 from keras.utils import plot_model
 from matplotlib.backends.backend_pdf import PdfPages
-from scipy.signal import medfilt, savgol_filter
-from scipy.stats import linregress
-from sklearn.metrics import make_scorer, mean_squared_error
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 
 from Configuration_Variables import *
-
-
-def avg(lst):
-	return sum(lst) / len(lst)
-
-
-def difference_polarity(lst1, lst2):
-	return (avg(lst1) - avg(lst2)) / abs(avg(lst1) - avg(lst2))
-
-
-def calculate_line_of_best_fit(x, y, isPolyfit=False, order=1):
-	if not isPolyfit:
-		slope_avg, intercept_avg, _, _, _ = linregress(x, y)
-		line_of_best_fit = slope_avg * x + intercept_avg
-	else:
-		coefficients = np.polyfit(x, y, order)
-		polynomial = np.poly1d(coefficients)
-		line_of_best_fit = polynomial(x)
-	return line_of_best_fit
-
-
-# Function to apply smoothing to residuals
-def apply_smoothing(residuals, method, window_size, poly_order):
-	"""
-	Apply smoothing to the residuals using the specified method.
-
-	Parameters:
-	- residuals: The residual data to be smoothed.
-	- method: The smoothing method ('savgol', 'boxcar', 'median', or None).
-	- window_size: The window size for the smoothing operation.
-	- poly_order: The polynomial order for Savitzky-Golay filter (only used if method is 'savgol').
-
-	Returns:
-	- smoothed_residuals: The smoothed residuals.
-	"""
-	if isinstance(residuals, pd.Series):
-		residuals = residuals.values.flatten()  # Convert Pandas Series to NumPy array and flatten
-	else:
-		residuals = residuals.flatten()  # If it's already a NumPy array, just flatten it
-	
-	if method == 'savgol':
-		if window_size is None:
-			raise ValueError("Window size must be specified for Savitzky-Golay smoothing.")
-		smoothed_residuals = savgol_filter(residuals, window_length=window_size, polyorder=poly_order)
-	elif method == 'boxcar':
-		if window_size is None:
-			raise ValueError("Window size must be specified for boxcar smoothing.")
-		smoothed_residuals = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-		smoothed_residuals = np.pad(smoothed_residuals, (window_size // 2, window_size // 2), mode='edge')
-		if len(smoothed_residuals) > len(residuals):
-			smoothed_residuals = smoothed_residuals[:len(residuals)]
-		elif len(smoothed_residuals) < len(residuals):
-			smoothed_residuals = np.pad(smoothed_residuals, (0, len(residuals) - len(smoothed_residuals)), 'edge')
-	elif method == 'median':
-		if window_size is None:
-			raise ValueError("Window size must be specified for median filtering.")
-		if window_size % 2 == 0:  # Ensure window_size is odd
-			window_size += 1
-		smoothed_residuals = medfilt(residuals, kernel_size=window_size)
-	else:
-		smoothed_residuals = residuals
-	
-	return smoothed_residuals
-
-
-# Function to build a neural network model
-def build_neural_network(input_dim, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01, learning_rate=0.001):
-	"""
-	Build a customizable neural network model with specified parameters.
-
-	Parameters:
-	- input_dim: Dimension of the input data.
-	- layers: Number of hidden layers in the neural network.
-	- units: Number of units in each hidden layer.
-	- activation: Activation function for hidden layers.
-	- dropout_rate: Dropout rate for regularization.
-	- l2_reg: L2 regularization parameter.
-	- learning_rate: Learning rate for the optimizer.
-
-	Returns:
-	- model: Compiled Keras model.
-	"""
-	model = Sequential()
-	model.add(Dense(units, input_dim=input_dim, activation=activation, kernel_regularizer=l2(l2_reg)))
-	model.add(Dropout(dropout_rate))
-	model.add(BatchNormalization())
-	
-	"""
-	•	L1 and L2 Regularization:
-		•	L2 Regularization (Ridge): Adds a penalty equal to the sum of the squared weights to the loss function (e.g., Dense(units, kernel_regularizer=l2(0.01))).
-		•	L1 Regularization (Lasso): Adds a penalty equal to the sum of the absolute values of the weights (e.g., Dense(units, kernel_regularizer=l1(0.01))).
-		•	Elastic Net: Combines L1 and L2 regularization.
-	"""
-	for _ in range(layers - 1):
-		model.add(Dense(units, activation=activation, kernel_regularizer=l2(l2_reg)))
-		model.add(Dropout(dropout_rate))
-		model.add(BatchNormalization())
-	
-	model.add(Dense(1))  # Output layer for regression
-	model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
-	
-	return model
+from Supplemental_Sensor_Graph_Functions import *
 
 
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range, sensor_num, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
 	smoothing_method="boxcar", save_graphs=True, show_graphs=True, use_hyperparameter_tuning=False,
-	X_train=None, y_train=None, _plot_model=True
+	X_train=None, y_train=None, _plot_model=True, _display_info=False
 ):
 	"""
 	Analyze and visualize residuals and neural network fits for each sensor across multiple tests,
@@ -138,6 +28,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()  # Scale target data as well
 	
+	###   HYPERTUNING   ###
 	if use_hyperparameter_tuning and X_train is not None and y_train is not None:
 		# Use hyperparameter tuning to find the best model
 		best_model = hyperparameter_tuning(X_train, y_train, input_dim=1)
@@ -147,6 +38,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 		model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
 		                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
 	
+	###   LAYERS VISUAL   ###
 	if _plot_model:
 		# Create a plot of the model architecture
 		plot_model(model, to_file="model_visual.png", show_shapes=True, show_layer_names=True)
@@ -158,8 +50,11 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 		plt.axis('off')
 		plt.show()
 	
+	###   DISPLAY INFO   ###
+	if _display_info:
+		display_info(batch_size, model)
+	
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{SENSOR_SET}_Sensor_{STARTING_SENSOR}.pdf") as pdf:
-		
 		for layer_count in range(1, layers + 1):
 			
 			# First plot: Original Residuals combined for all tests in the layer
@@ -175,6 +70,11 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
 				updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[
 				                        :min_length].values.reshape(-1, 1)
+				
+				###   DISPLAY BIT RESOLUTION   ###
+				if _display_info:
+					calculate_bit_resolution("INSTRON", instron_force)
+					calculate_bit_resolution("ARDUINO", updated_arduino_force)
 				
 				# Standardize both input and output data
 				instron_force_scaled = input_scaler.fit_transform(instron_force)
@@ -194,7 +94,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				residuals = updated_arduino_force - fitted_values
 				
 				# Apply smoothing as needed
-				residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+				residuals_smoothed = apply_smoothing(updated_arduino_force, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 				
 				# Ensure instron_force and residuals_smoothed have the same length
 				instron_force_plot = instron_force[:len(residuals_smoothed)]
@@ -243,7 +143,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				residuals = updated_arduino_force - fitted_values
 				
 				# Perform linear regression to find the slope for this test's residuals
-				slope, intercept = np.polyfit(instron_force.flatten(), residuals.flatten(), 1)
+				slope, intercept = np.polyfit(fitted_values.flatten(), residuals.flatten(), 1)
 				
 				# Subtract the slope from the residuals
 				adjusted_residuals = residuals - (slope * instron_force + intercept)
@@ -268,43 +168,6 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				pdf.savefig()
 			
 			plt.close()
-
-
-# Example usage of hyperparameter tuning with RandomizedSearchCV
-def hyperparameter_tuning(X_train, y_train, input_dim):
-	model = KerasRegressor(build_fn=build_neural_network, input_dim=input_dim, verbose=0)
-	
-	param_dist = {
-		'layers': [1, 2, 3],
-		'units': [32, 64, 128],
-		'activation': ['relu', 'tanh'],  # 'sigmoid'
-		'dropout_rate': [0.2, 0.5, 0.7],
-		'l2_reg': [0.01, 0.001, 0.0001],
-		'learning_rate': [0.01, 0.001, 0.0001],
-		'batch_size': [16, 32, 64, 128, 256],
-		'epochs': [50, 100, 200]
-	}
-	
-	random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=20, cv=3, verbose=2, scoring=make_scorer(mean_squared_error, greater_is_better=False))
-	
-	random_search_result = random_search.fit(X_train, y_train)
-	
-	# Create a DataFrame to store all results
-	results_df = pd.DataFrame(random_search_result.cv_results_)
-	
-	# Extract relevant columns and sort by rank_test_score
-	results_df = results_df[['params', 'mean_test_score', 'rank_test_score']]
-	sorted_results = results_df.sort_values(by='rank_test_score')
-	
-	# Display all sorted results
-	print("All Sorted Results:")
-	print(sorted_results)
-	
-	# Display the best parameters and score
-	print("\nBest Parameters:", random_search_result.best_params_)
-	print("Best Score:", random_search_result.best_score_)
-	
-	return random_search_result.best_estimator_
 
 
 def analyze_and_graph_neural_fit_per_test(

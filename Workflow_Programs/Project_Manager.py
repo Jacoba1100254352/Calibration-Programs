@@ -50,11 +50,11 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 # To use the function with hyperparameter tuning
 
-analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
-	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
-	use_hyperparameter_tuning=False, X_train=X_train, y_train=y_train
-)
+# analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
+# 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
+# 	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
+# 	use_hyperparameter_tuning=False, X_train=X_train, y_train=y_train, _plot_model=False
+# )
 
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 # 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
@@ -113,7 +113,7 @@ analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 #     epochs=200, batch_size=32, save_graphs=SAVE_GRAPHS, show_graphs=True
 # )
 
-# analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method='boxcar', window_size=700, poly_order=1, sensor_num=2, save_graphs=SAVE_GRAPHS)
+analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method='boxcar', window_size=100, poly_order=1, sensor_num=2, save_graphs=SAVE_GRAPHS)
 
 # Others
 # graph_sensor_average_error(test_range=TEST_RANGE)
