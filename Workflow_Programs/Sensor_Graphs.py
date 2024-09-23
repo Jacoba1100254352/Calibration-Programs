@@ -8,8 +8,7 @@ from Supplemental_Sensor_Graph_Functions import *
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
-	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,
-	weight_bit_width=12, act_bit_width=12
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12  # , weight_bit_width=12, act_bit_width=12
 ):
 	"""
 	Analyze and visualize neural network fits across multiple tests with quantized weights and activations.
@@ -17,7 +16,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 
 	Parameters:
 	- test_range: A range or list of test numbers to include in the analysis.
-				  This allows the function to iterate over a series of data files or dataframes corresponding to different experimental or operational conditions.
+					This allows the function to iterate over a series of data files or dataframes corresponding to different experimental or operational conditions.
 	- sensor_num: The specific sensor number to analyze. This is used to pull the correct dataset from a larger collection.
 	- units: Number of neurons in each hidden layer of the neural network.
 	- layers: Number of hidden layers in the neural network model.
@@ -43,7 +42,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	# Initialize quantized neural network with specified parameters
 	model = QuantizedNN(
 		input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
-		weight_bit_width=weight_bit_width, act_bit_width=act_bit_width
+		weight_bit_width=bit_resolution, act_bit_width=bit_resolution
 	)
 	
 	# Move model to appropriate device (CPU or GPU)
@@ -109,7 +108,12 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 			
 			min_length = min(len(instron_data), len(updated_arduino_data))
 			instron_force = instron_data["Force [N]"].iloc[:min_length].values
-			updated_arduino_force = updated_arduino_data[f"Force{sensor_num} [N]"].iloc[:min_length].values
+			
+			# Use this for meta-analysis of calibration
+			# updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length]
+			
+			# Use this for analysis of raw ADC with instron N
+			updated_arduino_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
 			
 			# Quantize input and output data
 			instron_force = quantize_data(instron_force, bit_resolution)
@@ -124,16 +128,16 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				outputs = model(instron_force_tensor).cpu().numpy()
 			
 			# Calculate residuals
-			residuals = updated_arduino_force - outputs.flatten()
+			residuals = updated_arduino_force - outputs.flatten()  # updated_arduino_force_tensor
 			
 			# Apply smoothing
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
 			# Plot residuals
-			plt.plot(instron_force, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)
+			plt.plot(instron_force, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)  # instron_force_tensor
 		
 		plt.xlabel("Instron Force [N]")
-		plt.ylabel("Residual Force [N]")
+		plt.ylabel("Residual Force [ADC]")  # N
 		plt.legend(loc="lower left")
 		plt.title(f"Quantized Neural Fit Across Multiple Tests")
 		plt.grid(True)
@@ -178,7 +182,12 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				# Ensure arrays are of equal length for accurate comparison
 				min_length = min(len(instron_data), len(updated_arduino_data))
 				instron_force = instron_data["Force [N]"].iloc[:min_length]
-				updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length]
+				
+				# Use this for meta-analysis of calibration
+				# updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length]
+				
+				# Use this for analysis of raw ADC with instron N
+				updated_arduino_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
 				
 				# Quantize input and output data
 				instron_force = quantize_data(instron_force, bit_resolution)
@@ -195,7 +204,7 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
 			plt.xlabel("Instron Force [N]")
-			plt.ylabel("Residual Force [N]")
+			plt.ylabel("Residual Force [ADC]")  # N
 			plt.legend(loc="lower left")
 			plt.title(f"Residuals for Polynomial Fit (Order {order}) Across Multiple Tests")
 			plt.grid(True)
