@@ -1,5 +1,6 @@
 import torch
 from matplotlib.backends.backend_pdf import PdfPages
+from sklearn.preprocessing import StandardScaler
 
 from Configuration_Variables import *
 from Supplemental_Sensor_Graph_Functions import *
@@ -8,164 +9,154 @@ from Supplemental_Sensor_Graph_Functions import *
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
-	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True,
+	_quantized_model=True, bit_resolution=14, _hyperparameter_tuning=False
 ):
 	"""
-	Analyze and visualize neural network fits across multiple tests with quantized weights and activations.
-	This function fits a neural network model to sensor data and generates two graphs:
-	1. ADC vs Instron Force (N) with the neural network fit overlaid.
-	2. Residuals (ADC vs N minus neural fit) with optional smoothing.
-
-	Parameters:
-	- test_range: A range or list of test numbers to include in the analysis.
-	- sensor_num: The specific sensor number to analyze.
-	- units: Number of neurons in each hidden layer of the neural network.
-	- layers: Number of hidden layers in the neural network model.
-	- activation: Activation function for the neural network layers.
-	- dropout_rate: Dropout rate for regularization.
-	- l2_reg: L2 regularization factor to penalize large weights.
-	- learning_rate: Learning rate for the optimizer.
-	- epochs: Number of training epochs for the neural network.
-	- batch_size: Batch size for training.
-	- window_size: Window size for smoothing residuals.
-	- poly_order: Polynomial order for Savitzky-Golay filter if smoothing method is 'savgol'.
-	- smoothing_method: Method for smoothing residuals (e.g., 'savgol', 'boxcar').
-	- save_graphs: Whether to save the graphs as a PDF.
-	- show_graphs: Whether to display the graphs.
-	- bit_resolution: Bit resolution for quantizing input and output data.
+	Analyze and visualize neural network fits for each test and compare them across multiple tests.
+	This function fits a neural network model to each test individually, graphs the combined ADC vs Instron Force (N) data,
+	subtracts the individual neural fit from the combined data, and graphs the residuals for each test on the same graph.
 	"""
 	
-	# Initialize quantized neural network
-	model = QuantizedNN(
-		input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
-		weight_bit_width=bit_resolution, act_bit_width=bit_resolution
-	)
+	# Initialize scalers
+	input_scaler = StandardScaler()
+	output_scaler = StandardScaler()
 	
-	# Move model to device (CPU or GPU)
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-	model.to(device)
+	# Collect all tests' combined Instron Force and ADC values for graphing
+	combined_instron_force = []
+	combined_arduino_force = []
 	
-	# Define loss function and optimizer
-	criterion = nn.MSELoss()
-	optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
-	
-	# Training loop over all tests
-	for epoch in range(epochs):
-		model.train()  # Set model to training mode
-		total_loss = 0
-		num_batches = 0
+	# Load and combine all test data
+	for _TEST_NUM in test_range:
+		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
 		
-		for _TEST_NUM in test_range:
-			# Load data
-			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-			
-			min_length = min(len(instron_data), len(updated_arduino_data))
-			instron_force = instron_data["Force [N]"].iloc[:min_length].values
-			updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values
-			
-			# Quantize input and output data
-			instron_force = quantize_data(instron_force, bit_resolution)
-			updated_arduino_force = quantize_data(updated_arduino_force, bit_resolution)
-			
-			# Convert to PyTorch tensors
-			instron_force = torch.Tensor(instron_force).unsqueeze(1).to(device)
-			updated_arduino_force = torch.Tensor(updated_arduino_force).unsqueeze(1).to(device)
-			
-			# Create DataLoader
-			dataset = torch.utils.data.TensorDataset(instron_force, updated_arduino_force)
-			dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
-			
-			for x_batch, y_batch in dataloader:
-				optimizer.zero_grad()
-				outputs = model(x_batch)
-				loss = criterion(outputs, y_batch)
-				loss.backward()
-				optimizer.step()
-				
-				total_loss += loss.item()
-				num_batches += 1
+		min_length = min(len(instron_data), len(updated_arduino_data))
+		instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+		updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values.reshape(-1, 1)
 		
-		avg_loss = total_loss / num_batches if num_batches > 0 else 0
-		if (epoch + 1) % 10 == 0:
-			print(f"Epoch [{epoch + 1}/{epochs}], Loss: {avg_loss:.6f}")
+		# Scale the data
+		instron_force_scaled = input_scaler.fit_transform(instron_force)
+		updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force)
+		
+		combined_instron_force.append(instron_force_scaled)
+		combined_arduino_force.append(updated_arduino_force_scaled)
 	
-	# After training, evaluate and plot results
-	model.eval()  # Set model to evaluation mode
+	# Flatten the combined data
+	combined_instron_force = np.concatenate(combined_instron_force)
+	combined_arduino_force = np.concatenate(combined_arduino_force)
 	
+	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
-		plt.figure(figsize=(10, 6))
 		
-		# Plot ADC vs Instron Force (N) and overlay neural network fit
+		# Loop over each test in the range and perform neural fit separately
 		for _TEST_NUM in test_range:
-			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
 			
-			min_length = min(len(instron_data), len(updated_arduino_data))
-			instron_force = instron_data["Force [N]"].iloc[:min_length].values
-			updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values
+			# Optional hyperparameter tuning
+			if _hyperparameter_tuning:
+				X_train = combined_instron_force
+				y_train = combined_arduino_force
+				best_model = hyperparameter_tuning(X_train, y_train, input_dim=1)
+				model = best_model.model
 			
-			instron_force_quantized = quantize_data(instron_force, bit_resolution)
-			updated_arduino_force_quantized = quantize_data(updated_arduino_force, bit_resolution)
+			elif _quantized_model:
+				# Initialize and train the quantized neural network for this test
+				model = QuantizedNN(
+					input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
+					weight_bit_width=bit_resolution, act_bit_width=bit_resolution
+				)
+				device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+				model.to(device)
+				criterion = nn.MSELoss()
+				optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
+				
+				# Convert data to PyTorch tensors for training
+				instron_force_tensor = torch.Tensor(combined_instron_force).to(device)
+				updated_arduino_force_tensor = torch.Tensor(combined_arduino_force).to(device)
+				
+				dataset = torch.utils.data.TensorDataset(instron_force_tensor, updated_arduino_force_tensor)
+				dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+				
+				# Train the PyTorch quantized model
+				for epoch in range(epochs):
+					model.train()
+					total_loss = 0
+					num_batches = 0
+					for x_batch, y_batch in dataloader:
+						optimizer.zero_grad()
+						outputs = model(x_batch)
+						loss = criterion(outputs, y_batch)
+						loss.backward()
+						optimizer.step()
+						total_loss += loss.item()
+						num_batches += 1
+					if (epoch + 1) % 10 == 0:
+						print(f"Test {_TEST_NUM} - Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / num_batches:.6f}")
 			
-			instron_force_tensor = torch.Tensor(instron_force_quantized).unsqueeze(1).to(device)
+			else:
+				# Build a Keras-based neural network model if quantized is False
+				model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
+				                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
+				
+				# Early stopping to prevent overfitting
+				early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
+				
+				# Train the Keras model
+				model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+				              loss='mse')
+				model.fit(combined_instron_force, combined_arduino_force, epochs=epochs, batch_size=batch_size, verbose=2, callbacks=[
+					early_stopping])
+				
+				# Generate the predictions (outputs) for the Keras model
+				combined_outputs_scaled = model.predict(combined_instron_force)
+				combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
 			
-			with torch.no_grad():
-				outputs = model(instron_force_tensor).cpu().numpy()
+			# After training, evaluate the model and calculate residuals
+			if _quantized_model:
+				model.eval()
+				with torch.no_grad():
+					combined_instron_tensor = torch.Tensor(combined_instron_force).to(device)
+					combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
+					combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
 			
-			plt.plot(instron_force, updated_arduino_force, label=f"Test {_TEST_NUM} (ADC vs Instron)", linestyle='--', linewidth=1)
-			plt.plot(instron_force, outputs, label=f"Neural Fit (Test {_TEST_NUM})", linewidth=2)
-		
-		plt.xlabel("Instron Force [N]")
-		plt.ylabel("ADC Value")
-		plt.legend(loc="upper left")
-		plt.title(f"ADC vs Instron Force (Neural Fit) - Sensor {sensor_num}")
-		plt.grid(True)
-		
-		if show_graphs:
-			plt.show()
-		
-		if save_graphs:
-			pdf.savefig()
-		
-		plt.close()
-		
-		# Plot residuals (ADC vs N minus neural fit)
-		plt.figure(figsize=(10, 6))
-		for _TEST_NUM in test_range:
-			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			# Plot the combined data and the neural fit for this test
+			plt.figure(figsize=(10, 6))
+			plt.plot(input_scaler.inverse_transform(combined_instron_force), output_scaler.inverse_transform(combined_arduino_force),
+			         label="Combined ADC vs Instron Force", linestyle='--', linewidth=1)
+			plt.plot(input_scaler.inverse_transform(combined_instron_force), combined_outputs, label=f"Neural Fit (Test {_TEST_NUM})", linewidth=2)
+			plt.xlabel("Instron Force [N]")
+			plt.ylabel("ADC Value")
+			plt.legend(loc="upper left")
+			plt.title(f"ADC vs Instron Force (Neural Fit for Test {_TEST_NUM})")
+			plt.grid(True)
 			
-			min_length = min(len(instron_data), len(updated_arduino_data))
-			instron_force = instron_data["Force [N]"].iloc[:min_length].values
-			updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values
+			if show_graphs:
+				plt.show()
+			if save_graphs:
+				pdf.savefig()
+			plt.close()
 			
-			instron_force_quantized = quantize_data(instron_force, bit_resolution)
-			updated_arduino_force_quantized = quantize_data(updated_arduino_force, bit_resolution)
-			
-			instron_force_tensor = torch.Tensor(instron_force_quantized).unsqueeze(1).to(device)
-			
-			with torch.no_grad():
-				outputs = model(instron_force_tensor).cpu().numpy()
-			
-			residuals = updated_arduino_force_quantized - outputs.flatten()
+			# Plot the residuals (ADC vs N minus neural fit for this test)
+			residuals = output_scaler.inverse_transform(combined_arduino_force) - combined_outputs.flatten()
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			plt.plot(instron_force, residuals_smoothed, label=f"Residuals (Test {_TEST_NUM})", linewidth=2)
-		
-		plt.xlabel("Instron Force [N]")
-		plt.ylabel("Residuals (ADC - Neural Fit)")
-		plt.legend(loc="upper left")
-		plt.title(f"Residuals - Sensor {sensor_num}")
-		plt.grid(True)
-		
-		if show_graphs:
-			plt.show()
-		
-		if save_graphs:
-			pdf.savefig()
-		
-		plt.close()
+			# Slope correction of residuals
+			slope, intercept = np.polyfit(combined_outputs.flatten(), residuals.flatten(), 1)
+			adjusted_residuals = residuals - (slope * input_scaler.inverse_transform(combined_instron_force) + intercept)
+			
+			plt.figure(figsize=(10, 6))
+			plt.plot(input_scaler.inverse_transform(combined_instron_force), adjusted_residuals, label=f"Adjusted Residuals (Test {_TEST_NUM})", linewidth=2)
+			plt.xlabel("Instron Force [N]")
+			plt.ylabel("Adjusted Residuals (ADC - Neural Fit)")
+			plt.legend(loc="upper left")
+			plt.title(f"Adjusted Residuals for Test {_TEST_NUM}")
+			plt.grid(True)
+			
+			if show_graphs:
+				plt.show()
+			if save_graphs:
+				pdf.savefig()
+			plt.close()
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(

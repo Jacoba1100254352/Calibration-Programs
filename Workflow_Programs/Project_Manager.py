@@ -51,8 +51,9 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 # To use the function with hyperparameter tuning
 
 analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None, activation='tanh', l2_reg=0.001, learning_rate=0.1,
-	dropout_rate=0.2, sensor_num=2, layers=2, units=128, batch_size=64, save_graphs=SAVE_GRAPHS, bit_resolution=14
+	test_range=TEST_RANGE, smoothing_method=None, window_size=100, poly_order=None, activation='relu', l2_reg=0.0001, learning_rate=0.0001,
+	dropout_rate=0.5, sensor_num=2, layers=2, units=64, batch_size=256, save_graphs=SAVE_GRAPHS,
+	_quantized_model=False, bit_resolution=14, _hyperparameter_tuning=False
 )
 
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
