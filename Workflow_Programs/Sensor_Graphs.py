@@ -9,8 +9,7 @@ from Supplemental_Sensor_Graph_Functions import *
 def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
-	smoothing_method="boxcar", save_graphs=True, show_graphs=True,
-	_quantized_model=True, bit_resolution=14, _hyperparameter_tuning=False
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12
 ):
 	"""
 	Analyze and visualize neural network fits for each test and compare them across multiple tests.
@@ -22,129 +21,121 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()
 	
-	# Collect all tests' combined Instron Force and ADC values for graphing
+	# Initialize lists for storing combined data and residuals for each test
 	combined_instron_force = []
 	combined_arduino_force = []
 	
-	# Load and combine all test data
-	for _TEST_NUM in test_range:
-		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
-		
-		min_length = min(len(instron_data), len(updated_arduino_data))
-		instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
-		updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values.reshape(-1, 1)
-		
-		# Scale the data
-		instron_force_scaled = input_scaler.fit_transform(instron_force)
-		updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force)
-		
-		combined_instron_force.append(instron_force_scaled)
-		combined_arduino_force.append(updated_arduino_force_scaled)
-	
-	# Flatten the combined data
-	combined_instron_force = np.concatenate(combined_instron_force)
-	combined_arduino_force = np.concatenate(combined_arduino_force)
-	
 	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
-		
-		# Plot to combine results for all tests
+		# Set up figures for overlay and residuals
 		plt.figure(figsize=(10, 6))
+		overlay_fig = plt.figure(figsize=(10, 6))
+		residuals_fig = plt.figure(figsize=(10, 6))
 		
 		# Loop over each test in the range and perform neural fit separately
 		for _TEST_NUM in test_range:
+			# Load data for the current test
+			instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
+			updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
 			
-			# Optional hyperparameter tuning
-			if _hyperparameter_tuning:
-				X_train = combined_instron_force
-				y_train = combined_arduino_force
-				best_model = hyperparameter_tuning(X_train, y_train, input_dim=1)
-				model = best_model.model
+			min_length = min(len(instron_data), len(updated_arduino_data))
+			instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
+			updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values.reshape(-1, 1)
 			
-			elif _quantized_model:
-				# Initialize and train the quantized neural network for this test
-				model = QuantizedNN(
-					input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
-					weight_bit_width=bit_resolution, act_bit_width=bit_resolution
-				)
-				device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-				model.to(device)
-				criterion = nn.MSELoss()
-				optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
-				
-				# Convert data to PyTorch tensors for training
-				instron_force_tensor = torch.Tensor(combined_instron_force).to(device)
-				updated_arduino_force_tensor = torch.Tensor(combined_arduino_force).to(device)
-				
-				dataset = torch.utils.data.TensorDataset(instron_force_tensor, updated_arduino_force_tensor)
-				dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
-				
-				# Train the PyTorch quantized model
-				for epoch in range(epochs):
-					model.train()
-					total_loss = 0
-					num_batches = 0
-					for x_batch, y_batch in dataloader:
-						optimizer.zero_grad()
-						outputs = model(x_batch)
-						loss = criterion(outputs, y_batch)
-						loss.backward()
-						optimizer.step()
-						total_loss += loss.item()
-						num_batches += 1
-					if (epoch + 1) % 10 == 0:
-						print(f"Test {_TEST_NUM} - Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / num_batches:.6f}")
+			# Optional quantization step (if needed)
+			instron_force_quantized = quantize_data(instron_force.flatten(), bit_resolution)
+			updated_arduino_force_quantized = quantize_data(updated_arduino_force.flatten(), bit_resolution)
 			
-			else:
-				# Build a Keras-based neural network model if quantized is False
-				model = build_neural_network(input_dim=1, layers=layers, units=units, activation=activation,
-				                             dropout_rate=dropout_rate, l2_reg=l2_reg, learning_rate=learning_rate)
-				
-				# Early stopping to prevent overfitting
-				early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10, restore_best_weights=True)
-				
-				# Train the Keras model
-				model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-				              loss='mse')
-				model.fit(combined_instron_force, combined_arduino_force, epochs=epochs, batch_size=batch_size, verbose=2, callbacks=[
-					early_stopping])
-				
-				# Generate the predictions (outputs) for the Keras model
-				combined_outputs_scaled = model.predict(combined_instron_force)
+			# Scale the data
+			instron_force_scaled = input_scaler.fit_transform(instron_force_quantized.reshape(-1, 1))
+			updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force_quantized.reshape(-1, 1))
+			
+			combined_instron_force.append(instron_force_scaled)
+			combined_arduino_force.append(updated_arduino_force_scaled)
+			
+			# Initialize and train the quantized neural network for this test
+			model = QuantizedNN(
+				input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
+				weight_bit_width=bit_resolution, act_bit_width=bit_resolution
+			)
+			
+			device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+			model.to(device)
+			criterion = nn.MSELoss()
+			optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
+			
+			# Convert data to PyTorch tensors for training
+			instron_force_tensor = torch.Tensor(instron_force_scaled).to(device)
+			updated_arduino_force_tensor = torch.Tensor(updated_arduino_force_scaled).to(device)
+			
+			dataset = torch.utils.data.TensorDataset(instron_force_tensor, updated_arduino_force_tensor)
+			dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+			
+			# Train the model
+			for epoch in range(epochs):
+				model.train()
+				total_loss = 0
+				num_batches = 0
+				for x_batch, y_batch in dataloader:
+					optimizer.zero_grad()
+					outputs = model(x_batch)
+					loss = criterion(outputs, y_batch)
+					loss.backward()
+					optimizer.step()
+					total_loss += loss.item()
+					num_batches += 1
+				if (epoch + 1) % 10 == 0:
+					print(f"Test {_TEST_NUM} - Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / num_batches:.6f}")
+			
+			# After training, evaluate the model and calculate residuals
+			model.eval()
+			with torch.no_grad():
+				combined_instron_tensor = torch.Tensor(instron_force_scaled).to(device)
+				combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
 				combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
 			
-			# After generating predictions
-			if _quantized_model:
-				model.eval()
-				with torch.no_grad():
-					combined_instron_tensor = torch.Tensor(combined_instron_force).to(device)
-					combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
-					combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
+			# Convert Instron force and Arduino force back to the original scale
+			instron_force_orig = input_scaler.inverse_transform(instron_force_scaled)
+			arduino_force_orig = output_scaler.inverse_transform(updated_arduino_force_scaled)
 			
-			# Ensure combined_outputs and residuals are of the same length
-			min_length = min(len(combined_outputs), len(combined_arduino_force))
+			# Plot the overlay: Combined data and neural fit for this test
+			plt.figure(overlay_fig.number)
+			plt.plot(instron_force_orig, arduino_force_orig, label=f"Test {_TEST_NUM} - Data", linestyle='--', linewidth=1)
+			plt.plot(instron_force_orig, combined_outputs, label=f"Test {_TEST_NUM} - Neural Fit", linewidth=2)
 			
-			# Truncate both arrays to the same length
-			combined_outputs = combined_outputs[:min_length].flatten()
-			residuals = (combined_arduino_force[:min_length] - combined_outputs).flatten()
-			
-			# Apply smoothing as needed
+			# Calculate residuals: ADC - Neural Fit
+			residuals = arduino_force_orig.flatten() - combined_outputs.flatten()
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			# Perform slope correction on the residuals
-			slope, intercept = np.polyfit(combined_outputs, residuals, 1)
-			adjusted_residuals = residuals - (slope * combined_outputs + intercept)
+			# Ensure Instron force and residuals_smoothed have the same length
+			if len(instron_force_orig) != len(residuals_smoothed):
+				residuals_smoothed = residuals_smoothed[:len(instron_force_orig)]
 			
-			# Plot residuals on the same graph for all tests
-			plt.plot(input_scaler.inverse_transform(combined_instron_force), adjusted_residuals, label=f"Adjusted Residuals (Test {_TEST_NUM})", linewidth=2)
+			# Plot the residuals for this test
+			plt.figure(residuals_fig.number)
+			plt.plot(instron_force_orig, residuals_smoothed, label=f"Residuals (Test {_TEST_NUM})", linewidth=2)
 		
+		# Finalize overlay plot
+		plt.figure(overlay_fig.number)
 		plt.xlabel("Instron Force [N]")
-		plt.ylabel("ADC Value and Residuals")
+		plt.ylabel("ADC Value")
+		plt.title(f"Overlay of ADC vs Instron Force and Neural Fit for Tests {test_range}")
 		plt.legend(loc="upper left")
-		plt.title(f"Combined Neural Fit and Residuals for Tests {test_range}")
 		plt.grid(True)
+		if show_graphs:
+			plt.show()
+		if save_graphs:
+			pdf.savefig()
+		plt.close()
 		
+		# Finalize residuals plot
+		plt.figure(residuals_fig.number)
+		plt.xlabel("Instron Force [N]")
+		plt.ylabel("Residuals (ADC - Neural Fit)")
+		plt.title(f"Residuals for Tests {test_range}")
+		plt.legend(loc="lower left")
+		plt.grid(True)
+		plt.gca().invert_xaxis()
 		if show_graphs:
 			plt.show()
 		if save_graphs:
