@@ -51,8 +51,8 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 # To use the function with hyperparameter tuning
 
 analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
-	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
-	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS
+	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None, activation='tanh', l2_reg=0.001, learning_rate=0.1,
+	dropout_rate=0.2, sensor_num=2, layers=2, units=128, batch_size=64, save_graphs=SAVE_GRAPHS, bit_resolution=14
 )
 
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
@@ -112,7 +112,7 @@ analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 #     epochs=200, batch_size=32, save_graphs=SAVE_GRAPHS, show_graphs=True
 # )
 
-analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method='boxcar', window_size=100, poly_order=1, sensor_num=2, save_graphs=SAVE_GRAPHS)
+# analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, smoothing_method='boxcar', window_size=100, poly_order=1, sensor_num=2, save_graphs=SAVE_GRAPHS)
 
 # Others
 # graph_sensor_average_error(test_range=TEST_RANGE)
