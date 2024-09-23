@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+import tensorflow_model_optimization as tfmot  # Import for quantization
 from keras.layers import BatchNormalization, Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
@@ -72,6 +74,56 @@ def apply_smoothing(residuals, method, window_size, poly_order):
 		smoothed_residuals = residuals
 	
 	return smoothed_residuals
+
+
+def quantize_data(data, bit_resolution):
+	"""Quantize the data to the given bit resolution."""
+	max_val = np.max(np.abs(data))
+	scale = (2**bit_resolution) - 1
+	quantized_data = np.round(data / max_val * scale) * max_val / scale
+	return quantized_data
+
+
+# Function to build a quantized neural network model
+def build_quantized_neural_network(input_dim, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01, learning_rate=0.001):
+	"""
+	Build a customizable neural network model with quantization-aware training and specified parameters.
+
+	Parameters:
+	- input_dim: Dimension of the input data.
+	- layers: Number of hidden layers in the neural network.
+	- units: Number of units in each hidden layer.
+	- activation: Activation function for hidden layers.
+	- dropout_rate: Dropout rate for regularization.
+	- l2_reg: L2 regularization parameter.
+	- learning_rate: Learning rate for the optimizer.
+
+	Returns:
+	- model: Quantization-aware trained Keras model.
+	"""
+	# Define the basic sequential model
+	model = tf.keras.Sequential()
+	
+	# Add input and first layer
+	model.add(tf.keras.layers.InputLayer(input_shape=(input_dim,)))
+	model.add(tf.keras.layers.Dense(units, activation=activation, kernel_regularizer=tf.keras.regularizers.l2(l2_reg)))
+	model.add(tf.keras.layers.Dropout(dropout_rate))
+	
+	# Add more layers as needed
+	for _ in range(layers - 1):
+		model.add(tf.keras.layers.Dense(units, activation=activation, kernel_regularizer=tf.keras.regularizers.l2(l2_reg)))
+		model.add(tf.keras.layers.Dropout(dropout_rate))
+	
+	# Output layer
+	model.add(tf.keras.layers.Dense(1))  # Output layer for regression
+	
+	# Compile the model with Adam optimizer
+	model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse')
+	
+	# Apply quantization-aware training
+	quant_aware_model = tfmot.quantization.keras.quantize_model(model)
+	
+	return quant_aware_model
 
 
 # Function to build a neural network model
@@ -207,93 +259,93 @@ def get_quantized_bit_resolution(model):
 
 
 def determine_minimum_bit_resolution(data, precision=None, epsilon=1e-12):
-    """
-    Determine the minimum bit resolution required to represent the input data
-    as precisely as possible.
+	"""
+	Determine the minimum bit resolution required to represent the input data
+	as precisely as possible.
 
-    Parameters:
-    - data: NumPy array or list of input data to analyze.
-    - precision: The required precision (smallest difference between values).
-                 If None, it will be automatically calculated based on data.
-    - epsilon: A small value to handle floating-point precision issues.
+	Parameters:
+	- data: NumPy array or list of input data to analyze.
+	- precision: The required precision (smallest difference between values).
+				 If None, it will be automatically calculated based on data.
+	- epsilon: A small value to handle floating-point precision issues.
 
-    Returns:
-    - A dictionary containing:
-        - minimum_bits: The minimum number of bits required.
-        - dynamic_range: The range of the data.
-        - min_val: The minimum value in the data.
-        - max_val: The maximum value in the data.
-        - precision: The precision used for calculation.
-    """
-
-    # Convert to NumPy array if input is a list
-    if isinstance(data, list):
-        data = np.array(data)
-
-    # Ensure data is a floating-point type for precision calculations
-    data = data.astype(np.float64)
-
-    # Calculate range
-    min_val = np.min(data)
-    max_val = np.max(data)
-    dynamic_range = max_val - min_val
-
-    # Handle case where dynamic range is zero (all values are identical)
-    if dynamic_range == 0:
-        print("All data points are identical. Minimum bit resolution is 1 bit.")
-        return {
-            "minimum_bits": 1,  # 1 bit is sufficient to represent a single unique value
-            "dynamic_range": dynamic_range,
-            "min_val": min_val,
-            "max_val": max_val,
-            "precision": 0  # No precision needed
-        }
-
-    # If precision is not provided, calculate it
-    if precision is None:
-        unique_values = np.unique(data)
-        if len(unique_values) < 2:
-            # Only one unique value exists
-            print("Only one unique value found in data. Minimum bit resolution is 1 bit.")
-            return {
-                "minimum_bits": 1,
-                "dynamic_range": dynamic_range,
-                "min_val": min_val,
-                "max_val": max_val,
-                "precision": 0
-            }
-        # Calculate the smallest difference between sorted unique values
-        diffs = np.diff(unique_values)
-        precision = np.min(diffs)
-        if not np.isfinite(precision) or precision <= 0:
-            print("Calculated precision is non-finite or non-positive. Setting precision to epsilon.")
-            precision = epsilon
-
-    # Ensure precision is positive and finite
-    if precision <= 0 or not np.isfinite(precision):
-        print("Precision must be positive and finite. Setting precision to epsilon.")
-        precision = epsilon
-
-    # Calculate the number of bits required
-    ratio = dynamic_range / precision
-    if ratio <= 0:
-        print("Dynamic range divided by precision is non-positive. Setting minimum bits to 1.")
-        minimum_bits = 1
-    else:
-        log_ratio = np.log2(ratio)
-        if not np.isfinite(log_ratio):
-            print("Logarithm of ratio is non-finite. Setting minimum bits to 1.")
-            minimum_bits = 1
-        else:
-            minimum_bits = int(np.ceil(log_ratio))
-
-    return {
-        "minimum_bits": minimum_bits,
-        "dynamic_range": dynamic_range,
-        "min_val": min_val,
-        "max_val": max_val,
-        "precision": precision
-    }
+	Returns:
+	- A dictionary containing:
+		- minimum_bits: The minimum number of bits required.
+		- dynamic_range: The range of the data.
+		- min_val: The minimum value in the data.
+		- max_val: The maximum value in the data.
+		- precision: The precision used for calculation.
+	"""
+	
+	# Convert to NumPy array if input is a list
+	if isinstance(data, list):
+		data = np.array(data)
+	
+	# Ensure data is a floating-point type for precision calculations
+	data = data.astype(np.float64)
+	
+	# Calculate range
+	min_val = np.min(data)
+	max_val = np.max(data)
+	dynamic_range = max_val - min_val
+	
+	# Handle case where dynamic range is zero (all values are identical)
+	if dynamic_range == 0:
+		print("All data points are identical. Minimum bit resolution is 1 bit.")
+		return {
+			"minimum_bits": 1,  # 1 bit is sufficient to represent a single unique value
+			"dynamic_range": dynamic_range,
+			"min_val": min_val,
+			"max_val": max_val,
+			"precision": 0  # No precision needed
+		}
+	
+	# If precision is not provided, calculate it
+	if precision is None:
+		unique_values = np.unique(data)
+		if len(unique_values) < 2:
+			# Only one unique value exists
+			print("Only one unique value found in data. Minimum bit resolution is 1 bit.")
+			return {
+				"minimum_bits": 1,
+				"dynamic_range": dynamic_range,
+				"min_val": min_val,
+				"max_val": max_val,
+				"precision": 0
+			}
+		# Calculate the smallest difference between sorted unique values
+		diffs = np.diff(unique_values)
+		precision = np.min(diffs)
+		if not np.isfinite(precision) or precision <= 0:
+			print("Calculated precision is non-finite or non-positive. Setting precision to epsilon.")
+			precision = epsilon
+	
+	# Ensure precision is positive and finite
+	if precision <= 0 or not np.isfinite(precision):
+		print("Precision must be positive and finite. Setting precision to epsilon.")
+		precision = epsilon
+	
+	# Calculate the number of bits required
+	ratio = dynamic_range / precision
+	if ratio <= 0:
+		print("Dynamic range divided by precision is non-positive. Setting minimum bits to 1.")
+		minimum_bits = 1
+	else:
+		log_ratio = np.log2(ratio)
+		if not np.isfinite(log_ratio):
+			print("Logarithm of ratio is non-finite. Setting minimum bits to 1.")
+			minimum_bits = 1
+		else:
+			minimum_bits = int(np.ceil(log_ratio))
+	
+	return {
+		"minimum_bits": minimum_bits,
+		"dynamic_range": dynamic_range,
+		"min_val": min_val,
+		"max_val": max_val,
+		"precision": precision
+	}
 
 
 # Example usage of hyperparameter tuning with RandomizedSearchCV
@@ -332,6 +384,7 @@ def hyperparameter_tuning(X_train, y_train, input_dim):
 	
 	return random_search_result.best_estimator_
 
+
 def display_info(batch_size, model):
 	model.summary(expand_nested=True, show_trainable=True)
 	model_memory = get_model_memory_usage(batch_size, model)
@@ -360,7 +413,8 @@ def display_info(batch_size, model):
 				print("Weights:", weights)
 				print("Biases:", biases)
 			print("-" * 50)
-			
+
+
 def calculate_bit_resolution(data_title, data):
 	# Determine minimum bit resolution for the data
 	print(data_title + ":")
