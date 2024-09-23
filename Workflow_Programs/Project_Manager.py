@@ -47,13 +47,12 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 # 		sensor_num=2, layers=3, units=64, batch_size=16, l2_reg=0.001, epochs=200, learning_rate=0.0001, dropout_rate=0.2, activation="tanh", save_graphs=SAVE_GRAPHS,
 # 	)
 
-X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
+# X_train, y_train = getTrainingData(_sensor_num=2, _TEST_RANGE=TEST_RANGE)
 # To use the function with hyperparameter tuning
 
 analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	test_range=TEST_RANGE, smoothing_method="boxcar", window_size=100, poly_order=None,
-	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS,
-	use_hyperparameter_tuning=False, X_train=X_train, y_train=y_train, _plot_model=False
+	sensor_num=2, layers=1, units=128, batch_size=256, save_graphs=SAVE_GRAPHS
 )
 
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(

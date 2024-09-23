@@ -1,16 +1,83 @@
+import brevitas.nn as qnn
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tensorflow_model_optimization as tfmot  # Import for quantization
+import tensorflow_model_optimization as tfmot
+import torch.nn as nn
+from brevitas.core.scaling import ScalingImplType
+from brevitas.quant import Int8WeightPerTensorFixedPoint
 from keras.layers import BatchNormalization, Dense, Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.regularizers import l2
+from keras.utils import plot_model
 from keras.wrappers.scikit_learn import KerasRegressor
 from scipy.signal import medfilt, savgol_filter
 from scipy.stats import linregress
 from sklearn.metrics import make_scorer, mean_squared_error
 from sklearn.model_selection import RandomizedSearchCV
+
+
+class QuantizedNN(nn.Module):
+	def __init__(
+		self, input_dim, units=64, layers=2, activation='relu', dropout_rate=0.5,
+		weight_bit_width=8, act_bit_width=8
+	):
+		super(QuantizedNN, self).__init__()
+		
+		# Define activations
+		activation_functions = {
+			'relu': qnn.QuantReLU,
+			'tanh': qnn.QuantTanh,
+			'sigmoid': qnn.QuantSigmoid
+		}
+		
+		quant_activation_class = activation_functions.get(activation.lower(), qnn.QuantReLU)
+		
+		# Input layer with automatic quantization scaling
+		self.layers = nn.ModuleList([
+			qnn.QuantLinear(
+				input_dim, units,
+				bias=True,
+				weight_bit_width=weight_bit_width,
+				weight_quant=Int8WeightPerTensorFixedPoint,
+				scaling_impl_type=ScalingImplType.STATS
+			)
+		])
+		self.activations = nn.ModuleList([quant_activation_class(bit_width=act_bit_width)])
+		self.dropouts = nn.ModuleList([nn.Dropout(dropout_rate)])
+		
+		# Hidden layers
+		for _ in range(1, layers):
+			self.layers.append(
+				qnn.QuantLinear(
+					units, units,
+					bias=True,
+					weight_bit_width=weight_bit_width,
+					weight_quant=Int8WeightPerTensorFixedPoint,
+					scaling_impl_type=ScalingImplType.STATS
+				)
+			)
+			self.activations.append(quant_activation_class(bit_width=act_bit_width))
+			self.dropouts.append(nn.Dropout(dropout_rate))
+		
+		# Output layer
+		self.output_layer = qnn.QuantLinear(
+			units, 1,
+			bias=True,
+			weight_bit_width=weight_bit_width,
+			weight_quant=Int8WeightPerTensorFixedPoint,
+			scaling_impl_type=ScalingImplType.STATS
+		)
+	
+	def forward(self, x):
+		for layer, activation, dropout in zip(self.layers, self.activations, self.dropouts):
+			x = layer(x)
+			x = activation(x)
+			x = dropout(x)
+		x = self.output_layer(x)
+		return x
 
 
 def avg(lst):
@@ -76,6 +143,7 @@ def apply_smoothing(residuals, method, window_size, poly_order):
 	return smoothed_residuals
 
 
+# Helper function for quantizing data (if using custom bit resolutions for inputs/outputs)
 def quantize_data(data, bit_resolution):
 	"""Quantize the data to the given bit resolution."""
 	max_val = np.max(np.abs(data))
@@ -87,19 +155,7 @@ def quantize_data(data, bit_resolution):
 # Function to build a quantized neural network model
 def build_quantized_neural_network(input_dim, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01, learning_rate=0.001):
 	"""
-	Build a customizable neural network model with quantization-aware training and specified parameters.
-
-	Parameters:
-	- input_dim: Dimension of the input data.
-	- layers: Number of hidden layers in the neural network.
-	- units: Number of units in each hidden layer.
-	- activation: Activation function for hidden layers.
-	- dropout_rate: Dropout rate for regularization.
-	- l2_reg: L2 regularization parameter.
-	- learning_rate: Learning rate for the optimizer.
-
-	Returns:
-	- model: Quantization-aware trained Keras model.
+	Build a neural network with quantization-aware training at 8-bit resolution.
 	"""
 	# Define the basic sequential model
 	model = tf.keras.Sequential()
@@ -117,10 +173,10 @@ def build_quantized_neural_network(input_dim, layers=2, units=64, activation='re
 	# Output layer
 	model.add(tf.keras.layers.Dense(1))  # Output layer for regression
 	
-	# Compile the model with Adam optimizer
+	# Compile the model
 	model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse')
 	
-	# Apply quantization-aware training
+	# Apply 8-bit quantization-aware training
 	quant_aware_model = tfmot.quantization.keras.quantize_model(model)
 	
 	return quant_aware_model
@@ -413,6 +469,18 @@ def display_info(batch_size, model):
 				print("Weights:", weights)
 				print("Biases:", biases)
 			print("-" * 50)
+
+
+def display_layer_info(model):
+	# Create a plot of the model architecture
+	plot_model(model, to_file="model_visual.png", show_shapes=True, show_layer_names=True)
+	
+	# Display the generated plot
+	img = plt.imread("model_visual.png")
+	plt.figure(figsize=(10, 10))
+	plt.imshow(img)
+	plt.axis('off')
+	plt.show()
 
 
 def calculate_bit_resolution(data_title, data):
