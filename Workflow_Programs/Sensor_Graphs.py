@@ -49,6 +49,9 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
 		
+		# Plot to combine results for all tests
+		plt.figure(figsize=(10, 6))
+		
 		# Loop over each test in the range and perform neural fit separately
 		for _TEST_NUM in test_range:
 			
@@ -111,7 +114,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				combined_outputs_scaled = model.predict(combined_instron_force)
 				combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
 			
-			# After training, evaluate the model and calculate residuals
+			# After generating predictions
 			if _quantized_model:
 				model.eval()
 				with torch.no_grad():
@@ -119,44 +122,34 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 					combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
 					combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
 			
-			# Plot the combined data and the neural fit for this test
-			plt.figure(figsize=(10, 6))
-			plt.plot(input_scaler.inverse_transform(combined_instron_force), output_scaler.inverse_transform(combined_arduino_force),
-			         label="Combined ADC vs Instron Force", linestyle='--', linewidth=1)
-			plt.plot(input_scaler.inverse_transform(combined_instron_force), combined_outputs, label=f"Neural Fit (Test {_TEST_NUM})", linewidth=2)
-			plt.xlabel("Instron Force [N]")
-			plt.ylabel("ADC Value")
-			plt.legend(loc="upper left")
-			plt.title(f"ADC vs Instron Force (Neural Fit for Test {_TEST_NUM})")
-			plt.grid(True)
+			# Ensure combined_outputs and residuals are of the same length
+			min_length = min(len(combined_outputs), len(combined_arduino_force))
 			
-			if show_graphs:
-				plt.show()
-			if save_graphs:
-				pdf.savefig()
-			plt.close()
+			# Truncate both arrays to the same length
+			combined_outputs = combined_outputs[:min_length].flatten()
+			residuals = (combined_arduino_force[:min_length] - combined_outputs).flatten()
 			
-			# Plot the residuals (ADC vs N minus neural fit for this test)
-			residuals = output_scaler.inverse_transform(combined_arduino_force) - combined_outputs.flatten()
+			# Apply smoothing as needed
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			# Slope correction of residuals
-			slope, intercept = np.polyfit(combined_outputs.flatten(), residuals.flatten(), 1)
-			adjusted_residuals = residuals - (slope * input_scaler.inverse_transform(combined_instron_force) + intercept)
+			# Perform slope correction on the residuals
+			slope, intercept = np.polyfit(combined_outputs, residuals, 1)
+			adjusted_residuals = residuals - (slope * combined_outputs + intercept)
 			
-			plt.figure(figsize=(10, 6))
+			# Plot residuals on the same graph for all tests
 			plt.plot(input_scaler.inverse_transform(combined_instron_force), adjusted_residuals, label=f"Adjusted Residuals (Test {_TEST_NUM})", linewidth=2)
-			plt.xlabel("Instron Force [N]")
-			plt.ylabel("Adjusted Residuals (ADC - Neural Fit)")
-			plt.legend(loc="upper left")
-			plt.title(f"Adjusted Residuals for Test {_TEST_NUM}")
-			plt.grid(True)
-			
-			if show_graphs:
-				plt.show()
-			if save_graphs:
-				pdf.savefig()
-			plt.close()
+		
+		plt.xlabel("Instron Force [N]")
+		plt.ylabel("ADC Value and Residuals")
+		plt.legend(loc="upper left")
+		plt.title(f"Combined Neural Fit and Residuals for Tests {test_range}")
+		plt.grid(True)
+		
+		if show_graphs:
+			plt.show()
+		if save_graphs:
+			pdf.savefig()
+		plt.close()
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
