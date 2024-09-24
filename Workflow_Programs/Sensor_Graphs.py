@@ -417,24 +417,30 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 			
 			# Iterate over each test
 			for _TEST_NUM in test_range:
-				# Load the data for the current test
+				# Load data from CSV files
 				instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
 				updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=_TEST_NUM))
 				
-				# Ensure equal length for instron and arduino data
+				# Ensure arrays are of equal length for accurate comparison
 				min_length = min(len(instron_data), len(updated_arduino_data))
 				instron_force = instron_data["Force [N]"].iloc[:min_length]
-				updated_arduino_force = updated_arduino_data[f"ADC{sensor_num}"].iloc[:min_length]
+				
+				# Use this for meta-analysis of calibration
+				# updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].iloc[:min_length]
+				
+				# Use this for analysis of raw ADC with instron N
+				updated_arduino_force = updated_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
 				
 				# Quantize input and output data
 				instron_force = quantize_data(instron_force, bit_resolution)
 				updated_arduino_force = quantize_data(updated_arduino_force, bit_resolution)
 				
-				# Initialize variables to store the combined fits and residuals
-				combined_fits = np.zeros_like(instron_force)
-				residuals_combined = np.zeros_like(instron_force)
-				
+				# Apply polynomial fit to the data
 				if segment_size is not None:  # Process data in segments
+					# Initialize variables to store the combined fits and residuals
+					combined_fits = np.zeros_like(instron_force)
+					residuals_combined = np.zeros_like(instron_force)
+					
 					num_segments = len(instron_force) // segment_size
 					mse_list, mae_list = [], []
 					
@@ -473,24 +479,21 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 					         label=f"Smoothed Residuals (Test {_TEST_NUM})", linewidth=2)
 				
 				else:  # Full polynomial fit without segmentation
-					poly_coeffs = np.polyfit(instron_force, updated_arduino_force, order)
-					poly_fit = np.polyval(poly_coeffs, instron_force)
+					# Fit the polynomial model
+					lin_fit = calculate_line_of_best_fit(x=instron_force, y=updated_arduino_force, isPolyfit=True, order=order)
+					residuals = updated_arduino_force - lin_fit
 					
-					# Calculate residuals
-					residuals = updated_arduino_force - poly_fit
-					residuals_smoothed = apply_smoothing(residuals, method=smoothing_method,
-					                                     window_size=window_size, poly_order=poly_order)
-					
-					# Calculate MSE and MAE for the full fit
-					mse_poly = mean_squared_error(updated_arduino_force, poly_fit)
-					mae_poly = mean_absolute_error(updated_arduino_force, poly_fit)
+					# Calculate MSE and MAE for polynomial fit
+					mse_poly = mean_squared_error(updated_arduino_force, lin_fit)
+					mae_poly = mean_absolute_error(updated_arduino_force, lin_fit)
 					
 					print(f"Test {_TEST_NUM}, Polynomial Fit (Order {order}): MSE={mse_poly}, MAE={mae_poly}")
 					
-					# Plot the polynomial fit and smoothed residuals
-					plt.plot(instron_force, poly_fit, '-', label=f"Poly Fit (Test {_TEST_NUM})", linewidth=2)
-					plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '--',
-					         label=f"Smoothed Residuals (Test {_TEST_NUM})", linewidth=2)
+					# Apply smoothing using the specified method
+					residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+					
+					# Plot the smoothed residuals
+					plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
 			# Finalize and display the plot
 			plt.xlabel("Instron Force [N]")
