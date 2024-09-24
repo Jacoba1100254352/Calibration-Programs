@@ -30,7 +30,9 @@ class QuantizedNN(nn.Module):
 		activation_functions = {
 			'relu': qnn.QuantReLU,
 			'tanh': qnn.QuantTanh,
-			'sigmoid': qnn.QuantSigmoid
+			'sigmoid': qnn.QuantSigmoid,
+			'hardtanh': qnn.QuantHardTanh,
+			'identity': qnn.QuantIdentity
 		}
 		
 		quant_activation_class = activation_functions.get(activation.lower(), qnn.QuantReLU)
