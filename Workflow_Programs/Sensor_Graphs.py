@@ -1,5 +1,6 @@
 import torch
 from matplotlib.backends.backend_pdf import PdfPages
+from sklearn.metrics import mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 
 from Configuration_Variables import *
@@ -22,7 +23,6 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 	If enable_hyperparameter_tuning is True, performs hyperparameter tuning over specified ranges.
 	"""
 	
-	import matplotlib.pyplot as plt
 	import itertools
 	from sklearn.model_selection import train_test_split
 	
@@ -119,7 +119,8 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				results_list = []
 				
 				# Hyperparameter tuning
-				for (units_, layers_, activation_, dropout_rate_, l2_reg_, learning_rate_, bit_resolution_, epochs_, batch_size_) in hyperparameter_grid:
+				for (units_, layers_, activation_, dropout_rate_, l2_reg_, learning_rate_, bit_resolution_, epochs_,
+				     batch_size_) in hyperparameter_grid:
 					tmpObject = {
 						'units': units_,
 						'layers': layers_,
@@ -272,57 +273,66 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 				arduino_force_orig = output_scaler_full.inverse_transform(updated_arduino_force_scaled)
 			
 			else:
-				# Without hyperparameter tuning, proceed as before
-				# Initialize scalers
-				input_scaler = StandardScaler()
-				output_scaler = StandardScaler()
-				instron_force_scaled = input_scaler.fit_transform(instron_force_quantized.reshape(-1, 1))
-				updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force_quantized.reshape(-1, 1))
-				
-				# Initialize and train the quantized neural network for this test
-				model = QuantizedNN(
-					input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
-					weight_bit_width=bit_resolution, act_bit_width=bit_resolution
-				)
-				
-				device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-				model.to(device)
-				criterion = nn.MSELoss()
-				optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
-				
-				# Convert data to PyTorch tensors for training
-				instron_force_tensor = torch.Tensor(instron_force_scaled).to(device)
-				updated_arduino_force_tensor = torch.Tensor(updated_arduino_force_scaled).to(device)
-				
-				dataset = torch.utils.data.TensorDataset(instron_force_tensor, updated_arduino_force_tensor)
-				dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
-				
-				# Train the model
-				for epoch in range(epochs):
-					model.train()
-					total_loss = 0
-					num_batches = 0
-					for x_batch, y_batch in dataloader:
-						optimizer.zero_grad()
-						outputs = model(x_batch)
-						loss = criterion(outputs, y_batch)
-						loss.backward()
-						optimizer.step()
-						total_loss += loss.item()
-						num_batches += 1
-					if (epoch + 1) % 10 == 0:
-						print(f"Test {_TEST_NUM} - Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / num_batches:.6f}")
-				
-				# After training, evaluate the model and calculate residuals
-				model.eval()
-				with torch.no_grad():
-					combined_instron_tensor = torch.Tensor(instron_force_scaled).to(device)
-					combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
-					combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
-				
-				# Convert Instron force and Arduino force back to the original scale
-				instron_force_orig = input_scaler.inverse_transform(instron_force_scaled)
-				arduino_force_orig = output_scaler.inverse_transform(updated_arduino_force_scaled)
+				for layer_ in range(1, layers + 1):
+					# mse_nn = mae_nn = 10
+					# while mae_nn > 2:
+					# Without hyperparameter tuning, proceed as before
+					# Initialize scalers
+					input_scaler = StandardScaler()
+					output_scaler = StandardScaler()
+					instron_force_scaled = input_scaler.fit_transform(instron_force_quantized.reshape(-1, 1))
+					updated_arduino_force_scaled = output_scaler.fit_transform(updated_arduino_force_quantized.reshape(-1, 1))
+					
+					# Initialize and train the quantized neural network for this test
+					model = QuantizedNN(
+						input_dim=1, units=units, layers=layer_, activation=activation, dropout_rate=dropout_rate,
+						weight_bit_width=bit_resolution, act_bit_width=bit_resolution
+					)
+					
+					device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+					model.to(device)
+					criterion = nn.MSELoss()
+					optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
+					
+					# Convert data to PyTorch tensors for training
+					instron_force_tensor = torch.Tensor(instron_force_scaled).to(device)
+					updated_arduino_force_tensor = torch.Tensor(updated_arduino_force_scaled).to(device)
+					
+					dataset = torch.utils.data.TensorDataset(instron_force_tensor, updated_arduino_force_tensor)
+					dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+					
+					# Train the model
+					for epoch in range(epochs):
+						model.train()
+						total_loss = 0
+						num_batches = 0
+						for x_batch, y_batch in dataloader:
+							optimizer.zero_grad()
+							outputs = model(x_batch)
+							loss = criterion(outputs, y_batch)
+							loss.backward()
+							optimizer.step()
+							total_loss += loss.item()
+							num_batches += 1
+						if (epoch + 1) % 10 == 0:
+							print(f"Test {_TEST_NUM} - Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / num_batches:.6f}")
+					
+					# After training, evaluate the model and calculate residuals
+					model.eval()
+					with torch.no_grad():
+						combined_instron_tensor = torch.Tensor(instron_force_scaled).to(device)
+						combined_outputs_scaled = model(combined_instron_tensor).cpu().numpy()
+						combined_outputs = output_scaler.inverse_transform(combined_outputs_scaled)  # Inverse transform
+					
+					# Calculate MSE and MAE for neural network fit
+					mse_nn = mean_squared_error(updated_arduino_force_quantized, combined_outputs)
+					mae_nn = mean_absolute_error(updated_arduino_force_quantized, combined_outputs)
+					
+					print(f"Test {_TEST_NUM}, Neural Network Fit: MSE={mse_nn}, MAE={mae_nn}")
+					
+					# Convert Instron force and Arduino force back to the original scale
+					instron_force_orig = input_scaler.inverse_transform(instron_force_scaled)
+					arduino_force_orig = output_scaler.inverse_transform(updated_arduino_force_scaled)
 			
 			# The rest of the code is common to both cases
 			# Plot the overlay: Combined data and neural fit for this test
@@ -332,9 +342,10 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 			                label=f"Test {_TEST_NUM} - Neural Fit", linewidth=2)
 			
 			# Calculate residuals: ADC - Neural Fit
-			residuals = arduino_force_orig.flatten() - combined_outputs.flatten()
-			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method,
-			                                     window_size=window_size, poly_order=poly_order)
+			# residuals = arduino_force_orig.flatten() - combined_outputs.flatten()
+			# residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			residuals = updated_arduino_force_quantized.flatten() - combined_outputs.flatten()
+			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
 			# Ensure Instron force and residuals_smoothed have the same length
 			if len(instron_force_orig) != len(residuals_smoothed):
@@ -380,7 +391,7 @@ def analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
-	test_range, sensor_num, window_size=None, poly_order=2, smoothing_method=None, save_graphs=True, show_graphs=True, bit_resolution=12
+	test_range, sensor_num, window_size=None, poly_order=None, smoothing_method=None, save_graphs=True, show_graphs=True, bit_resolution=12
 ):
 	"""
 	Analyze and visualize residuals and polynomial fits of different orders for each sensor across multiple tests,
@@ -423,6 +434,12 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				# Fit the polynomial model
 				lin_fit = calculate_line_of_best_fit(x=instron_force, y=updated_arduino_force, isPolyfit=True, order=order)
 				residuals = updated_arduino_force - lin_fit
+				
+				# Calculate MSE and MAE for polynomial fit
+				mse_poly = mean_squared_error(updated_arduino_force, lin_fit)
+				mae_poly = mean_absolute_error(updated_arduino_force, lin_fit)
+				
+				print(f"Test {_TEST_NUM}, Polynomial Fit (Order {order}): MSE={mse_poly}, MAE={mae_poly}")
 				
 				# Apply smoothing using the specified method
 				residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
