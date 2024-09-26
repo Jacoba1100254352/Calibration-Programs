@@ -13,6 +13,77 @@ seed_value = 42  # Or any other integer
 
 
 def analyze_and_graph_neural_fit(
+	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5, l2_reg=0.01,
+	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
+	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,
+	enable_hyperparameter_tuning=False, mapping='N_vs_N',
+	hyperparams_dict=None
+):
+	plt.close('all')
+	
+	# Initialize the PDF to save the graphs
+	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
+		# Set up figures and axes for overlay and residuals
+		overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))
+		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
+		
+		for test_num in test_range:
+			# Load and prepare data
+			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(
+				sensor_num, test_num, bit_resolution, mapping
+			)
+			
+			if enable_hyperparameter_tuning:
+				# Train model with hyperparameter tuning
+				model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(
+					inputs, targets, bit_resolution, test_num, hyperparams_dict
+				)
+			else:
+				# Train model without hyperparameter tuning
+				model, input_scaler, output_scaler = train_model(
+					inputs, targets, units, layers, activation, dropout_rate, l2_reg,
+					learning_rate, epochs, batch_size, bit_resolution
+				)
+			
+			# Evaluate model and calculate residuals
+			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
+			
+			# Apply smoothing to residuals
+			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			
+			# First Graph: Plot calibrated sensor N vs Instron N
+			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N]", linestyle='--', linewidth=1)  # (Test {test_num})
+			overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N]", linewidth=2)  # (Test {test_num})
+			
+			# Plot overlay (calibrated N values or ADC values vs Instron N)
+			# plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping)
+			
+			# Plot residuals
+			plot_residuals(residuals_ax, instron_force, residuals_smoothed, test_num, mapping)
+		
+		# Finalize and save first graph (Calibrated N vs Instron N)
+		overlay_ax.set_xlabel("Instron Force [N]")
+		overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
+		overlay_ax.set_title(f"Calibrated Sensor [N] vs Baseline [N]")
+		overlay_ax.legend(loc="upper left")
+		overlay_ax.grid(True)
+		overlay_ax.invert_xaxis()
+		overlay_ax.invert_yaxis()
+		if save_graphs:
+			pdf.savefig(overlay_fig)
+		
+		residuals_ax.set_title(f"Residuals with {bit_resolution}-bit model")
+		residuals_ax.legend(loc="upper left")
+		if save_graphs:
+			pdf.savefig(residuals_fig)
+		
+		if show_graphs:
+			plt.show()
+		plt.close(overlay_fig)
+		plt.close(residuals_fig)
+
+
+def analyze_and_dual_graph_neural_fit(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
 	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,

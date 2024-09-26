@@ -1,3 +1,5 @@
+import random
+
 import torch
 from sklearn.preprocessing import StandardScaler
 
@@ -28,7 +30,7 @@ def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='ADC_vs_
 	else:
 		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
 	
-	return inputs, targets, instron_force, sensor_adc
+	return inputs, targets, instron_force_quantized, sensor_adc_quantized
 
 
 def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test_num, hyperparams_dict):
@@ -242,14 +244,14 @@ def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
 	
 	if mapping == 'N_vs_N':
 		# First graph: Residuals in N vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals in N (Test {test_num})", linewidth=2)
+		residuals_ax.plot(x, residuals, label=f"Residuals [N]", linewidth=2)  # (Test {test_num})
 		residuals_ax.set_xlabel("Instron Force [N]")
-		residuals_ax.set_ylabel("Residuals in N")
+		residuals_ax.set_ylabel("Residuals [N]")
 	elif mapping == 'ADC_vs_N':
 		# Second graph: Residuals in ADC vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals in ADC (Test {test_num})", linewidth=2)
+		residuals_ax.plot(x, residuals, label=f"Residuals [ADC]", linewidth=2)  # (Test {test_num})
 		residuals_ax.set_xlabel("Instron Force [N]")
-		residuals_ax.set_ylabel("Residuals in ADC")
+		residuals_ax.set_ylabel("Residuals [ADC]")
 	else:
 		raise ValueError("Invalid mapping type. Use 'N_vs_N' or 'ADC_vs_N'.")
 	residuals_ax.grid(True)
