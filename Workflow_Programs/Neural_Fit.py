@@ -199,43 +199,57 @@ def evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, outpu
 		outputs_scaled = model(inputs_tensor).cpu().numpy()
 		outputs = output_scaler.inverse_transform(outputs_scaled)
 	
+	# First Graph: Residuals in N (calibrated sensor N - Instron N)
 	if mapping == 'N_vs_N':
-		# Convert outputs (predicted sensor ADC) to N using the neural network (calibration step)
-		# In this case, the model outputs calibrated N values
-		outputs_calibrated_N = outputs.flatten()  # Calibrated to N
-		return outputs_calibrated_N, outputs_calibrated_N - instron_force.flatten()
+		# Residuals are calculated as the difference between the calibrated N and Instron N
+		residuals = outputs.flatten() - instron_force.flatten()
+		return outputs.flatten(), residuals
 	
-	# For ADC vs N, residuals will be the difference between ADC and model output
-	residuals = sensor_adc.flatten() - outputs.flatten()
-	return outputs, residuals
+	# Second Graph: Residuals in ADC (Instron N - ADC values)
+	elif mapping == 'ADC_vs_N':
+		# Residuals are the difference between the ADC values and the predicted output from the model
+		residuals = sensor_adc.flatten() - outputs.flatten()
+		return outputs, residuals
 
 
 def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):
-	if mapping == 'ADC_vs_N':
-		x = inputs.flatten()  # Instron Force (N)
-		y_true = targets.flatten()  # Sensor ADC
-		y_pred = outputs.flatten()  # Neural network predicted ADC
-		xlabel = "Instron Force [N]"
-		ylabel = "ADC Value"
-	elif mapping == 'N_vs_N':
-		x = targets.flatten()  # Instron Force (N)
-		y_true = targets.flatten()  # Calibrated N (Instron)
-		y_pred = outputs.flatten()  # Calibrated N (from neural network)
+	if mapping == 'N_vs_N':
+		# Plot calibrated N values (Y) vs Instron N (X)
+		x = targets.flatten()  # Instron N
+		y_pred = outputs.flatten()  # Predicted N (Calibrated)
 		xlabel = "Instron Force [N]"
 		ylabel = "Calibrated Force [N]"
+	elif mapping == 'ADC_vs_N':
+		# Plot ADC vs Instron N
+		x = targets.flatten()  # Instron N
+		y_pred = outputs.flatten()  # Predicted ADC
+		xlabel = "Instron Force [N]"
+		ylabel = "ADC Value"
 	else:
 		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
 	
-	overlay_ax.plot(x, y_true, label=f"Test {test_num} - Data", linestyle='--', linewidth=1)
 	overlay_ax.plot(x, y_pred, label=f"Test {test_num} - Neural Fit", linewidth=2)
 	overlay_ax.set_xlabel(xlabel)
 	overlay_ax.set_ylabel(ylabel)
 	overlay_ax.grid(True)
 
 
-def plot_residuals(residuals_ax, inputs, residuals, test_num, mapping):
-	x = inputs.flatten()
-	residuals_ax.plot(x, residuals, label=f"Residuals (Test {test_num})", linewidth=2)
-	residuals_ax.set_xlabel("Instron Force [N]" if mapping == 'N_to_ADC' else "ADC Value")
-	residuals_ax.set_ylabel("Residuals " + ("[N]" if mapping == 'ADC_to_N' else "ADC"))
+def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
+	x = instron_force.flatten()  # Instron Force (N) is the baseline
+	
+	# Invert the x-axis to make the direction go from larger to smaller
+	residuals_ax.invert_xaxis()
+	
+	if mapping == 'N_vs_N':
+		# First graph: Residuals in N vs Instron N
+		residuals_ax.plot(x, residuals, label=f"Residuals in N (Test {test_num})", linewidth=2)
+		residuals_ax.set_xlabel("Instron Force [N]")
+		residuals_ax.set_ylabel("Residuals in N")
+	elif mapping == 'ADC_vs_N':
+		# Second graph: Residuals in ADC vs Instron N
+		residuals_ax.plot(x, residuals, label=f"Residuals in ADC (Test {test_num})", linewidth=2)
+		residuals_ax.set_xlabel("Instron Force [N]")
+		residuals_ax.set_ylabel("Residuals in ADC")
+	else:
+		raise ValueError("Invalid mapping type. Use 'N_vs_N' or 'ADC_vs_N'.")
 	residuals_ax.grid(True)

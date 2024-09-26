@@ -1,10 +1,15 @@
 # from matplotlib.backends.backend_pdf import PdfPages
+import random
+
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
 # from Supplemental_Sensor_Graph_Functions import *
 from Neural_Fit import *
+
+
+seed_value = 42  # Or any other integer
 
 
 def analyze_and_graph_neural_fit(
@@ -14,11 +19,6 @@ def analyze_and_graph_neural_fit(
 	enable_hyperparameter_tuning=False, mapping='ADC_vs_N',
 	hyperparams_dict=None
 ):
-	"""
-	Analyze and visualize neural network fits for each test and compare them across multiple tests.
-	This function fits a neural network model to each test individually, graphs the combined data and neural fit,
-	subtracts the individual neural fit from the combined data, and graphs the residuals for each test.
-	"""
 	plt.close('all')
 	
 	# Initialize the PDF to save the graphs
@@ -51,11 +51,11 @@ def analyze_and_graph_neural_fit(
 			# Apply smoothing to residuals
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			# Plot overlay
+			# Plot overlay (calibrated N values or ADC values vs Instron N)
 			plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping)
 			
 			# Plot residuals
-			plot_residuals(residuals_ax, inputs, residuals_smoothed, test_num, mapping)
+			plot_residuals(residuals_ax, instron_force, residuals_smoothed, test_num, mapping)
 		
 		# Finalize and save plots
 		overlay_ax.set_title(f"Overlay of Data and Neural Fit for Tests {test_range}")
