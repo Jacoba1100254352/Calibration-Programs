@@ -13,8 +13,8 @@ import pandas as pd
 
 # Sensor set and test number
 SENSOR_SET = 1
-TEST_NUM = 21
-STARTING_SENSOR = 4
+TEST_NUM = 9
+STARTING_SENSOR = 2
 
 # Number of sensors to process
 NUM_SENSORS = 1

@@ -767,7 +767,9 @@ def analyze_and_graph_residuals_and_fits_single_pdf(test_range):
 					plt.close()
 
 
-def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test_range):
+def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(
+	test_range, save_graphs=True, show_graphs=True, smoothing_method="boxcar", window_size=100, poly_order=None
+):
 	"""
     Analyze and visualize residuals and polynomial fits of different orders for each sensor across multiple tests,
     combining all tests in one graph per polynomial order.
@@ -795,9 +797,8 @@ def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test
 					residuals = updated_arduino_adc_force - lin_fit
 					
 					# Smooth the residuals
-					window_size = 1000
-					residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-					instron_force_adjusted = instron_force[(window_size - 1):]
+					residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+					instron_force_adjusted = instron_force[:len(residuals_smoothed)]
 					
 					plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Test {_TEST_NUM}, Sensor {sensor_num}", linewidth=2)
 			
@@ -808,7 +809,12 @@ def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test
 			plt.grid(True)
 			plt.gca().invert_xaxis()
 			
-			pdf.savefig()
+			if show_graphs:
+				plt.show()
+			
+			if save_graphs:
+				pdf.savefig()
+			
 			plt.close()
 
 
