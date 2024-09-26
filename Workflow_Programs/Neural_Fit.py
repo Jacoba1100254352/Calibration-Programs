@@ -1,5 +1,3 @@
-import random
-
 import torch
 from sklearn.preprocessing import StandardScaler
 
@@ -244,12 +242,12 @@ def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
 	
 	if mapping == 'N_vs_N':
 		# First graph: Residuals in N vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals [N]", linewidth=2)  # (Test {test_num})
+		residuals_ax.plot(x, residuals, label=f"Residuals [N] (Test {test_num})", linewidth=2)  # (Test {test_num})
 		residuals_ax.set_xlabel("Instron Force [N]")
 		residuals_ax.set_ylabel("Residuals [N]")
 	elif mapping == 'ADC_vs_N':
 		# Second graph: Residuals in ADC vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals [ADC]", linewidth=2)  # (Test {test_num})
+		residuals_ax.plot(x, residuals, label=f"Residuals [ADC] (Test {test_num})", linewidth=2)  # (Test {test_num})
 		residuals_ax.set_xlabel("Instron Force [N]")
 		residuals_ax.set_ylabel("Residuals [ADC]")
 	else:
