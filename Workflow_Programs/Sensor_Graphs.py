@@ -16,60 +16,120 @@ def analyze_and_graph_neural_fit(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
 	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,
-	enable_hyperparameter_tuning=False, mapping='ADC_vs_N',
-	hyperparams_dict=None
+	enable_hyperparameter_tuning=False, hyperparams_dict=None
 ):
+	"""
+	Analyze and visualize neural network fits for each test and compare them across multiple tests.
+	Generates:
+	1. Graph comparing calibrated sensor N vs Instron N.
+	2. Dual subplots:
+	   - Residuals in N vs Instron N (N_vs_N).
+	   - Residuals in ADC vs Instron N (ADC_vs_N).
+	"""
 	plt.close('all')
 	
 	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
-		# Set up figures and axes for overlay and residuals
-		overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))
-		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
+		# Set up figures and axes
+		overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))  # First graph: Calibrated N vs Instron N
+		residuals_fig, (residuals_n_ax, residuals_adc_ax) = plt.subplots(2, 1, figsize=(10, 12))  # Dual subplots
 		
 		for test_num in test_range:
 			# Load and prepare data
-			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(
-				sensor_num, test_num, bit_resolution, mapping
+			inputs_adc_vs_n, targets_adc_vs_n, instron_force, sensor_adc = load_and_prepare_data(
+				sensor_num, test_num, bit_resolution, mapping='ADC_vs_N'
+			)
+			
+			inputs_n_vs_n, targets_n_vs_n, _, _ = load_and_prepare_data(
+				sensor_num, test_num, bit_resolution, mapping='N_vs_N'
 			)
 			
 			if enable_hyperparameter_tuning:
-				# Train model with hyperparameter tuning
-				model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(
-					inputs, targets, bit_resolution, test_num, hyperparams_dict
+				# Train model with hyperparameter tuning for both mappings
+				model_adc_vs_n, input_scaler_adc_vs_n, output_scaler_adc_vs_n, _ = train_model_with_hyperparameter_tuning(
+					inputs_adc_vs_n, targets_adc_vs_n, bit_resolution, test_num, hyperparams_dict
+				)
+				model_n_vs_n, input_scaler_n_vs_n, output_scaler_n_vs_n, _ = train_model_with_hyperparameter_tuning(
+					inputs_n_vs_n, targets_n_vs_n, bit_resolution, test_num, hyperparams_dict
 				)
 			else:
 				# Train model without hyperparameter tuning
-				model, input_scaler, output_scaler = train_model(
-					inputs, targets, units, layers, activation, dropout_rate, l2_reg,
+				model_adc_vs_n, input_scaler_adc_vs_n, output_scaler_adc_vs_n = train_model(
+					inputs_adc_vs_n, targets_adc_vs_n, units, layers, activation, dropout_rate, l2_reg,
+					learning_rate, epochs, batch_size, bit_resolution
+				)
+				model_n_vs_n, input_scaler_n_vs_n, output_scaler_n_vs_n = train_model(
+					inputs_n_vs_n, targets_n_vs_n, units, layers, activation, dropout_rate, l2_reg,
 					learning_rate, epochs, batch_size, bit_resolution
 				)
 			
-			# Evaluate model and calculate residuals
-			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
+			# Ensure reproducibility
+			torch.manual_seed(seed_value)
+			np.random.seed(seed_value)
+			random.seed(seed_value)
+			if torch.cuda.is_available():
+				torch.cuda.manual_seed(seed_value)
+				torch.cuda.manual_seed_all(seed_value)
+			
+			# Evaluate models for both mappings
+			outputs_adc_vs_n, residuals_adc = evaluate_model(
+				model_adc_vs_n, inputs_adc_vs_n, instron_force, sensor_adc, input_scaler_adc_vs_n, output_scaler_adc_vs_n, mapping='ADC_vs_N'
+			)
+			
+			outputs_n_vs_n, residuals_n = evaluate_model(
+				model_n_vs_n, inputs_n_vs_n, instron_force, sensor_adc, input_scaler_n_vs_n, output_scaler_n_vs_n, mapping='N_vs_N'
+			)
 			
 			# Apply smoothing to residuals
-			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			residuals_n_smoothed = apply_smoothing(residuals_n, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			residuals_adc_smoothed = apply_smoothing(residuals_adc, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			# Plot overlay (calibrated N values or ADC values vs Instron N)
-			plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping)
+			# First Graph: Plot calibrated sensor N vs Instron N
+			overlay_ax.plot(instron_force.flatten(), outputs_n_vs_n.flatten(), label=f"Calibrated Sensor N (Test {test_num})", linestyle='--', linewidth=1)
+			overlay_ax.plot(instron_force.flatten(), instron_force.flatten(), label=f"Instron N (Test {test_num})", linewidth=2)
 			
-			# Plot residuals
-			plot_residuals(residuals_ax, instron_force, residuals_smoothed, test_num, mapping)
+			# Second Graph (Subplot 1): Residuals in N (N_vs_N)
+			residuals_n_ax.plot(instron_force.flatten(), residuals_n_smoothed, label=f"Residuals in N (Test {test_num})", linewidth=2)
+			
+			# Second Graph (Subplot 2): Residuals in ADC (ADC_vs_N)
+			residuals_adc_ax.plot(instron_force.flatten(), residuals_adc_smoothed, label=f"Residuals in ADC (Test {test_num})", linewidth=2)
 		
-		# Finalize and save plots
-		overlay_ax.set_title(f"Overlay of Data and Neural Fit for Tests {test_range}")
+		# Finalize and save first graph (Calibrated N vs Instron N)
+		overlay_ax.set_xlabel("Instron Force [N]")
+		overlay_ax.set_ylabel("Force [N]")
+		overlay_ax.set_title(f"Calibrated Sensor N vs Instron N for Tests {test_range}")
 		overlay_ax.legend(loc="upper left")
+		overlay_ax.grid(True)
+		overlay_ax.invert_xaxis()
+		overlay_ax.invert_yaxis()
 		if save_graphs:
 			pdf.savefig(overlay_fig)
 		
-		residuals_ax.set_title(f"Residuals for Tests {test_range}")
-		residuals_ax.legend(loc="upper left")
+		# Finalize and save residuals subplot (N_vs_N)
+		residuals_n_ax.set_xlabel("Instron Force [N]")
+		residuals_n_ax.set_ylabel("Residuals in N")
+		residuals_n_ax.set_title(f"Residuals in N for Tests {test_range}")
+		residuals_n_ax.legend(loc="upper left")
+		residuals_n_ax.grid(True)
+		residuals_n_ax.invert_xaxis()
+		
+		# Finalize and save residuals subplot (ADC_vs_N)
+		residuals_adc_ax.set_xlabel("Instron Force [N]")
+		residuals_adc_ax.set_ylabel("Residuals in ADC")
+		residuals_adc_ax.set_title(f"Residuals in ADC for Tests {test_range}")
+		residuals_adc_ax.legend(loc="upper left")
+		residuals_adc_ax.grid(True)
+		residuals_adc_ax.invert_xaxis()
+		
+		# Save both subplots
 		if save_graphs:
 			pdf.savefig(residuals_fig)
 		
+		# Show graphs if requested
 		if show_graphs:
 			plt.show()
+		
+		# Close figures
 		plt.close(overlay_fig)
 		plt.close(residuals_fig)
 

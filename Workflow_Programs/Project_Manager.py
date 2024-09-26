@@ -41,9 +41,9 @@ if torch.cuda.is_available():
 analyze_and_graph_neural_fit(
 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
 	smoothing_method="boxcar", window_size=100, poly_order=None, activation='tanh',
-	l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='ADC_vs_N',
+	l2_reg=0.005, learning_rate=0.00075, epochs=100,
 	dropout_rate=0.1, layers=1, units=160, batch_size=64, bit_resolution=12, enable_hyperparameter_tuning=False
-)  # N_to_ADC
+)
 
 # analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
 # 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
