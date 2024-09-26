@@ -5,7 +5,7 @@ from Configuration_Variables import *
 from Supplemental_Sensor_Graph_Functions import *
 
 
-def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_to_ADC'):
+def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='ADC_vs_N'):
 	# Load data for the current test
 	instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=test_num))
 	arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
@@ -19,14 +19,14 @@ def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_to_AD
 	sensor_adc_quantized = quantize_data(sensor_adc.flatten(), bit_resolution)
 	
 	# Depending on the mapping, set inputs and targets
-	if mapping == 'N_to_ADC':
-		inputs = instron_force_quantized.reshape(-1, 1)
-		targets = sensor_adc_quantized.reshape(-1, 1)
-	elif mapping == 'ADC_to_N':
-		inputs = sensor_adc_quantized.reshape(-1, 1)
-		targets = instron_force_quantized.reshape(-1, 1)
+	if mapping == 'ADC_vs_N':
+		inputs = instron_force_quantized.reshape(-1, 1)  # Instron force as input
+		targets = sensor_adc_quantized.reshape(-1, 1)  # Raw ADC values as targets
+	elif mapping == 'N_vs_N':
+		inputs = sensor_adc_quantized.reshape(-1, 1)  # ADC values as input
+		targets = instron_force_quantized.reshape(-1, 1)  # Instron force as target
 	else:
-		raise ValueError("Invalid mapping type. Use 'N_to_ADC' or 'ADC_to_N'.")
+		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
 	
 	return inputs, targets, instron_force, sensor_adc
 
@@ -190,7 +190,7 @@ def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg
 	return model, input_scaler, output_scaler
 
 
-def evaluate_model(model, inputs, targets, input_scaler, output_scaler):
+def evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping):
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	model.eval()
 	with torch.no_grad():
@@ -199,26 +199,32 @@ def evaluate_model(model, inputs, targets, input_scaler, output_scaler):
 		outputs_scaled = model(inputs_tensor).cpu().numpy()
 		outputs = output_scaler.inverse_transform(outputs_scaled)
 	
-	# Calculate residuals
-	residuals = outputs.flatten() - targets.flatten()
+	if mapping == 'N_vs_N':
+		# Convert outputs (predicted sensor ADC) to N using the neural network (calibration step)
+		# In this case, the model outputs calibrated N values
+		outputs_calibrated_N = outputs.flatten()  # Calibrated to N
+		return outputs_calibrated_N, outputs_calibrated_N - instron_force.flatten()
+	
+	# For ADC vs N, residuals will be the difference between ADC and model output
+	residuals = sensor_adc.flatten() - outputs.flatten()
 	return outputs, residuals
 
 
 def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):
-	if mapping == 'N_to_ADC':
-		x = inputs.flatten()
-		y_true = targets.flatten()
-		y_pred = outputs.flatten()
+	if mapping == 'ADC_vs_N':
+		x = inputs.flatten()  # Instron Force (N)
+		y_true = targets.flatten()  # Sensor ADC
+		y_pred = outputs.flatten()  # Neural network predicted ADC
 		xlabel = "Instron Force [N]"
 		ylabel = "ADC Value"
-	elif mapping == 'ADC_to_N':
-		x = inputs.flatten()
-		y_true = targets.flatten()
-		y_pred = outputs.flatten()
-		xlabel = "ADC Value"
-		ylabel = "Instron Force [N]"
+	elif mapping == 'N_vs_N':
+		x = targets.flatten()  # Instron Force (N)
+		y_true = targets.flatten()  # Calibrated N (Instron)
+		y_pred = outputs.flatten()  # Calibrated N (from neural network)
+		xlabel = "Instron Force [N]"
+		ylabel = "Calibrated Force [N]"
 	else:
-		raise ValueError("Invalid mapping type. Use 'N_to_ADC' or 'ADC_to_N'.")
+		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
 	
 	overlay_ax.plot(x, y_true, label=f"Test {test_num} - Data", linestyle='--', linewidth=1)
 	overlay_ax.plot(x, y_pred, label=f"Test {test_num} - Neural Fit", linewidth=2)

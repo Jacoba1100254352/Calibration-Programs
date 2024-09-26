@@ -34,7 +34,7 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 analyze_and_graph_neural_fit(
 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
 	smoothing_method="boxcar", window_size=100, poly_order=None, activation='tanh',
-	l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_to_ADC',
+	l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N',
 	dropout_rate=0.1, layers=1, units=160, batch_size=64, bit_resolution=12, enable_hyperparameter_tuning=False
 )  # N_to_ADC
 

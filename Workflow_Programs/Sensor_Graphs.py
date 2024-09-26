@@ -11,7 +11,7 @@ def analyze_and_graph_neural_fit(
 	test_range, sensor_num, units=64, layers=2, activation='relu', dropout_rate=0.5, l2_reg=0.01,
 	learning_rate=0.001, epochs=100, batch_size=32, window_size=None, poly_order=None,
 	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,
-	enable_hyperparameter_tuning=False, mapping='N_to_ADC',
+	enable_hyperparameter_tuning=False, mapping='ADC_vs_N',
 	hyperparams_dict=None
 ):
 	"""
@@ -46,7 +46,7 @@ def analyze_and_graph_neural_fit(
 				)
 			
 			# Evaluate model and calculate residuals
-			outputs, residuals = evaluate_model(model, inputs, targets, input_scaler, output_scaler)
+			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
 			
 			# Apply smoothing to residuals
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)

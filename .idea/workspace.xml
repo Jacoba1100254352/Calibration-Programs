@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="WIP: Fixing non-segmented option">
-      <change afterPath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" afterDir="false" />
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
     </list>
@@ -101,7 +100,7 @@
       <workItem from="1725901758168" duration="67124000" />
       <workItem from="1726613822128" duration="6034000" />
       <workItem from="1726688957415" duration="72648000" />
-      <workItem from="1727217829964" duration="7363000" />
+      <workItem from="1727217829964" duration="9309000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -287,7 +286,15 @@
       <option name="project" value="LOCAL" />
       <updated>1727214978724</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N">
+      <option name="closed" value="true" />
+      <created>1727317220813</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1727317220813</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -324,12 +331,13 @@
     <MESSAGE value="Printing and analysing mae and mse between polyfit and neural fit. Simplified Project_Manager.py (scratch)" />
     <MESSAGE value="WIP: Working to get the polyfit segmented for better comparison with NN" />
     <MESSAGE value="WIP: Fixing non-segmented option" />
-    <option name="LAST_COMMIT_MESSAGE" value="WIP: Fixing non-segmented option" />
+    <MESSAGE value="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N" />
+    <option name="LAST_COMMIT_MESSAGE" value="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1726169460359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1726177418676" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1727205456539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1727316858427" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1727318784706" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
   </component>
 </project>
