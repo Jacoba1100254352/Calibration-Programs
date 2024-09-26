@@ -1,4 +1,5 @@
 from Sensor_Graphs import *
+from Workflow_Programs.Export_Sensor_Data import SENSOR_NUM
 
 
 SAVE_GRAPHS = False
@@ -30,15 +31,22 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 
 # Secondary Analyses
+analyze_and_graph_neural_fit(
+	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
+	smoothing_method="boxcar", window_size=100, poly_order=None, activation='tanh',
+	l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_to_ADC',
+	dropout_rate=0.1, layers=1, units=160, batch_size=64, bit_resolution=12, enable_hyperparameter_tuning=False
+)  # N_to_ADC
+
+# analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
+# 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
+# 	smoothing_method='boxcar', window_size=100, bit_resolution=12,
+# 	segment_size=100  # Mimic batch processing by using segments of size 100
+# )
+
 # analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests(
 # 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
 # 	smoothing_method='boxcar', window_size=100, poly_order=None, activation='tanh',
 # 	l2_reg=0.005, learning_rate=0.00075,
 # 	dropout_rate=0.1, layers=4, units=160, batch_size=64, bit_resolution=12, enable_hyperparameter_tuning=False
 # )
-
-analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
-	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-	smoothing_method='boxcar', window_size=100, bit_resolution=12,
-	# segment_size=None  # Mimic batch processing by using segments of size 100
-)

@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Verified hyperparameter tuning works, but does not yet log which worked best.">
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="WIP: Fixing non-segmented option">
+      <change afterPath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/project_purpose.md" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/project_purpose.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,18 +49,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Export_Sensor_Data.executor": "Run",
-    "Python.Graph Raw Arduino Data.executor": "Run",
-    "Python.Project_Manager.executor": "Run",
-    "Python.Sensor_Graphs.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/jacobanderson/Library/CloudStorage/Box-Box/Nanogroup/Projects/Bioimpedance/Pressure Controller/Jacob's Tests/Calibration Programs",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Export_Sensor_Data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Graph Raw Arduino Data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Project_Manager.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sensor_Graphs.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/jacobanderson/Library/CloudStorage/Box-Box/Nanogroup/Projects/Bioimpedance/Pressure Controller/Jacob's Tests/Calibration Programs&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
@@ -99,7 +100,8 @@
       <workItem from="1725578323709" duration="1905000" />
       <workItem from="1725901758168" duration="67124000" />
       <workItem from="1726613822128" duration="6034000" />
-      <workItem from="1726688957415" duration="53073000" />
+      <workItem from="1726688957415" duration="72648000" />
+      <workItem from="1727217829964" duration="7363000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -253,7 +255,39 @@
       <option name="project" value="LOCAL" />
       <updated>1727136758356</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Hyperparameter tuning adjustments">
+      <option name="closed" value="true" />
+      <created>1727201428352</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1727201428352</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Printing and analysing mae and mse between polyfit and neural fit. Simplified Project_Manager.py (scratch)">
+      <option name="closed" value="true" />
+      <created>1727209303998</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1727209303998</updated>
+    </task>
+    <task id="LOCAL-00022" summary="WIP: Working to get the polyfit segmented for better comparison with NN">
+      <option name="closed" value="true" />
+      <created>1727213392893</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1727213392893</updated>
+    </task>
+    <task id="LOCAL-00023" summary="WIP: Fixing non-segmented option">
+      <option name="closed" value="true" />
+      <created>1727214978724</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1727214978724</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -286,12 +320,16 @@
     <MESSAGE value="Simplified function, better but with figure error" />
     <MESSAGE value="Plots are working, graphs look good but not nearly as good as polyfit" />
     <MESSAGE value="Verified hyperparameter tuning works, but does not yet log which worked best." />
-    <option name="LAST_COMMIT_MESSAGE" value="Verified hyperparameter tuning works, but does not yet log which worked best." />
+    <MESSAGE value="Hyperparameter tuning adjustments" />
+    <MESSAGE value="Printing and analysing mae and mse between polyfit and neural fit. Simplified Project_Manager.py (scratch)" />
+    <MESSAGE value="WIP: Working to get the polyfit segmented for better comparison with NN" />
+    <MESSAGE value="WIP: Fixing non-segmented option" />
+    <option name="LAST_COMMIT_MESSAGE" value="WIP: Fixing non-segmented option" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1726169460359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1726177418676" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1727052209515" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1727188988082" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1727205456539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1727316858427" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
   </component>
 </project>
