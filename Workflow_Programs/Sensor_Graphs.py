@@ -10,6 +10,7 @@ from Neural_Fit import *
 
 # Set MATLAB-like appearance
 # Define font sizes
+SIZE_SMALL = 10
 SIZE_DEFAULT = 14
 SIZE_LARGE = 16
 # plt.rc("font", family="Roboto")  # controls default font
@@ -70,24 +71,24 @@ def analyze_and_graph_neural_fit(
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
 			# First Graph: Plot calibrated sensor N vs Instron N
-			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N]", linestyle='--', linewidth=2)  # Thicker lines
-			overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N]", linewidth=2)
+			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)  # Thicker lines
+			overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N] (Test {test_num})", linewidth=2)
 			
 			# Customize the graph appearance
-			overlay_ax.set_xlabel("Instron Force [N]", fontsize=14, fontweight='bold')
-			overlay_ax.set_ylabel("Calibrated Sensor Force [N]", fontsize=14, fontweight='bold')
-			overlay_ax.set_title(f"Calibrated Sensor [N] vs Baseline [N]", fontsize=16, fontweight='bold')
-			overlay_ax.legend(loc="upper left")
+			overlay_ax.set_xlabel("Instron Force [N]", fontsize=SIZE_DEFAULT, fontweight='bold')
+			overlay_ax.set_ylabel("Calibrated Sensor Force [N]", fontsize=SIZE_DEFAULT, fontweight='bold')
+			overlay_ax.set_title(f"Calibrated Sensor [N] vs Baseline [N]", fontsize=SIZE_LARGE, fontweight='bold')
+			overlay_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)  # Make legend smaller
 			overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
 			overlay_ax.invert_xaxis()
 			overlay_ax.invert_yaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
-			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N]", linewidth=2)
-			residuals_ax.set_xlabel("Instron Force [N]", fontsize=14, fontweight='bold')
-			residuals_ax.set_ylabel("Residuals [N]", fontsize=14, fontweight='bold')
-			residuals_ax.set_title(f"Residuals with {bit_resolution}-bit model", fontsize=16, fontweight='bold')
-			residuals_ax.legend(loc="upper left")
+			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N] (Test {test_num})", linewidth=2)
+			residuals_ax.set_xlabel("Instron Force [N]", fontsize=SIZE_DEFAULT, fontweight='bold')
+			residuals_ax.set_ylabel("Residuals [N]", fontsize=SIZE_DEFAULT, fontweight='bold')
+			residuals_ax.set_title(f"Residuals with {bit_resolution}-bit model", fontsize=SIZE_LARGE, fontweight='bold')
+			residuals_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)  # Make legend smaller
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
 			residuals_ax.invert_xaxis()
 		
@@ -103,13 +104,8 @@ def analyze_and_graph_neural_fit(
 		plt.close(residuals_fig)
 
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-
-
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
-	test_range, sensor_num, window_size=None, poly_order=None, smoothing_method=None,
+	test_range, sensor_num, smoothing_method=None, window_size=100, poly_order=None,
 	save_graphs=True, show_graphs=True, bit_resolution=12, mapping='N_vs_N'
 ):
 	"""

@@ -48,6 +48,5 @@ analyze_and_graph_neural_fit(
 
 # analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
 # 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-# 	smoothing_method='boxcar', window_size=100, bit_resolution=12,
-# 	mapping='N_vs_N'
+# 	smoothing_method='boxcar', bit_resolution=12, mapping='N_vs_N'
 # )
