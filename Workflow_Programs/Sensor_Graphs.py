@@ -71,6 +71,11 @@ def analyze_and_graph_neural_fit(
 			
 			# Apply smoothing to residuals
 			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			# targets = apply_smoothing(targets, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			# outputs = apply_smoothing(outputs, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			
+			overlay_ax.set_xlim([0, -1])
+			residuals_ax.set_xlim([0, -1])
 			
 			# First Graph: Plot calibrated sensor N vs Instron N
 			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)
@@ -80,19 +85,18 @@ def analyze_and_graph_neural_fit(
 			overlay_ax.set_xlabel("Instron Force [N]")
 			overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
 			overlay_ax.set_title(f"Neural Fit: Sensor vs. Instron Force ({bit_resolution}-bit)")  # Sensor-Instron Force Relationship with Neural Fit (12-bit)
-			overlay_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
+			overlay_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
-			overlay_ax.invert_xaxis()
-			overlay_ax.invert_yaxis()
+			# overlay_ax.invert_xaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
 			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N] (Test {test_num})", linewidth=2)
 			residuals_ax.set_xlabel("Instron Force [N]")
 			residuals_ax.set_ylabel("Residuals [N]")
-			residuals_ax.set_title(f"Residuals with {bit_resolution}-bit model")
-			residuals_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
+			residuals_ax.set_title(f"Residuals: Sensor vs. Instron Force")
+			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
-			residuals_ax.invert_xaxis()
+			# residuals_ax.invert_xaxis()
 		
 		# Save and show graphs
 		if save_graphs:
