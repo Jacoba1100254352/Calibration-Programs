@@ -1,5 +1,6 @@
 import time
 
+# If pynput is not found, conda and brew do not have it, use `pip install pynput`
 from pynput.mouse import Listener
 
 

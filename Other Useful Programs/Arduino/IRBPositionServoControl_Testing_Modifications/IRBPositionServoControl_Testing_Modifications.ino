@@ -1,10 +1,6 @@
 #include "RTClib.h" // RTClib by Adafruit (v2.1.4 used in testing)
 #include <SPI.h>    // Adafruit BusIO by Adafruit (v1.16.1 used in testing)
 
-// double coeff[4][2] = { { -0.0005008676260860371, 1.6640064056005333 }, {
-// -0.0005240312050570219, 2.0045894751013904 }, {
-// -0.0005330676074008357, 1.8571524108286008 }, {
-// -0.0005107544441430066, 1.6770027305168211 } };
 double coeff[4][2] = {{-0.00044280040320890596, 0.5050597471251378},
                       {-0.0005175249382435472, 1.9120768781888338},
                       {-0.0005141246242903676, 1.7785060726647088},
@@ -30,7 +26,7 @@ const unsigned long interval = 20; // 20ms interval
 const int boxcarSize = 10; // Number of samples for the moving average
 double force_N_history[4][boxcarSize]; // History buffer for each sensor
 int historyIndex = 0;
-bool DISABLE_RTC = true;
+bool DISABLE_RTC = false;
 
 // Setting up UNIX Epoch time
 RTC_DS3231 rtc;
@@ -44,15 +40,16 @@ void setup() {
       ;
   }
 
-  if (rtc.lostPower() && !DISABLE_RTC) {
-    Serial.println("RTC lost power, let's set the time!");
-    // The following line sets the RTC to the date & time this sketch was
-    // compiled
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
-    Serial.println("WARNING! Time will only be accurate to ±0.5 seconds.");
+  while (rtc.lostPower() && !DISABLE_RTC) {
+    Serial.println("RTC lost power! The time needs to be reset!");
+    // Serial.println("RTC lost power, let's set the time!");
+    // // The following line sets the RTC to the date & time this sketch was
+    // // compiled
+    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // // This line sets the RTC with an explicit date & time, for example to set
+    // // January 21, 2014 at 3am you would call:
+    // // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+    // Serial.println("WARNING! Time will only be accurate to ±0.5 seconds.");
   }
 
   for (int i = 0; i < 4; i++) {
@@ -127,8 +124,6 @@ void processInput() {
 }
 
 void PrintToMonitor() {
-  if (!DISABLE_RTC)
-    DateTime now = rtc.now(); // Read current time
   String output = String(millis()) + ",\t\t";
   for (int i = 0; i < 4; i++)
     output += String(force_a2d[i], DEC) + ", ";
@@ -143,6 +138,6 @@ void PrintToMonitor() {
             String(TotalPressure_kPa, 2) +
             ((!DISABLE_RTC) ? ", " : "");                   // Limit floating point precision
   if (!DISABLE_RTC)                                        // Append time if RTC is enabled
-    output += String(now.unixtime()); // Append UNIX Epoch time
+    output += String(rtc.now().unixtime()+21600); // Append UNIX Epoch time // VERIFY BEFORE RUNNING, 21,600 = 6*60*60 as it seems to be 6 hours behind somehow
   Serial.println(output);
 }

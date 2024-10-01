@@ -3,6 +3,7 @@ import time
 
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.metrics import mean_absolute_error
+from scipy.io import savemat
 
 # from Configuration_Variables import *
 # from Supplemental_Sensor_Graph_Functions import *
@@ -21,7 +22,6 @@ plt.rc("axes", titlesize=SIZE_LARGE)  # fontsize of the axes title
 plt.rc("axes", labelsize=SIZE_LARGE)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
 plt.rc("ytick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
-
 
 seed_value = 42  # Or any other integer
 
@@ -206,8 +206,8 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 
 def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, useArduinoADC=True):
 	"""
-    Analyze and visualize residuals and polynomial fits of different orders for each sensor.
-    """
+	Analyze and export residuals and polynomial fits of different orders for each sensor into .mat files.
+	"""
 	for sensor_num in SENSORS_RANGE:
 		# Sleep to avoid HTTPS request limit
 		time.sleep(5)
@@ -217,29 +217,35 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time, force, and ADC data
-		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
-		updated_arduino_time = updated_arduino_data["Time [s]"]
-		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+		instron_time = instron_data["Time [s]"].to_numpy()
+		instron_force = instron_data["Force [N]"].to_numpy()
+		updated_arduino_time = updated_arduino_data["Time [s]"].to_numpy()
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].to_numpy()
 		
 		# Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
 		aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
 		
-		# Plotting force comparison
-		plt.figure(figsize=(10, 6))
-		plt.plot(updated_arduino_time, updated_arduino_force, label="Calibrated Sensor Force", color="red")
-		plt.plot(instron_time, instron_force, label="Reference Force (Load Cell)", color="blue")
+		# Calculate force difference for export if needed
 		difference = instron_force - updated_arduino_force
-		plt.plot(instron_time, difference, label="Force Difference (Load Cell - Sensor)", color="green", linestyle="--")
-		plt.xlabel("Time [s]")
-		plt.ylabel("Force [N]")
-		plt.title(f"Force Measurement Comparison")
-		# plt.legend()
-		plt.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
-		plt.grid(True, which='both', linestyle='--', linewidth=0.75)
-		# plt.grid(True)
-		if save_graphs:
-			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} calibrated forces.png", dpi=300)
-		plt.show()
+		
+		# Create dictionary for .mat export
+		data_dict = {
+			'instron_time': instron_time,
+			'instron_force': instron_force,
+			'updated_arduino_time': updated_arduino_time,
+			'updated_arduino_force': updated_arduino_force,
+			'difference': difference
+		}
+		
+		# Create filename for the .mat file (relevant to the sensor data)
+		file_name = f"/Users/jacobanderson/Downloads/Test_{TEST_NUM}_Sensor_{sensor_num}_calibrated_forces.mat"
+		
+		# Save the data to a .mat file
+		savemat(file_name, data_dict)
+		
+		print(f"Data for Sensor {sensor_num} saved to {file_name}")
+		
+		exit()
 		
 		# Ensure arrays are of equal length for accurate comparison
 		min_length = min(len(instron_data), len(updated_arduino_data))
