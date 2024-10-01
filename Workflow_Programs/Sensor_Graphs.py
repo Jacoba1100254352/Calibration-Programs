@@ -80,17 +80,16 @@ def analyze_and_graph_neural_fit(
 			overlay_ax.set_xlabel("Instron Force [N]")
 			overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
 			overlay_ax.set_title(f"Neural Fit: Sensor vs. Instron Force ({bit_resolution}-bit)")  # Sensor-Instron Force Relationship with Neural Fit (12-bit)
-			overlay_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
+			overlay_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
 			overlay_ax.invert_xaxis()
-			overlay_ax.invert_yaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
 			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N] (Test {test_num})", linewidth=2)
 			residuals_ax.set_xlabel("Instron Force [N]")
 			residuals_ax.set_ylabel("Residuals [N]")
 			residuals_ax.set_title(f"Residuals with {bit_resolution}-bit model")
-			residuals_ax.legend(loc="upper left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
+			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
 			residuals_ax.invert_xaxis()
 		
