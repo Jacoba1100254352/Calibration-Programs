@@ -12,8 +12,8 @@ import pandas as pd
 ###    Define Global constants   ###
 
 # Sensor set and test number
-SENSOR_SET = 3
-TEST_NUM = 1
+SENSOR_SET = 1
+TEST_NUM = 9
 STARTING_SENSOR = 1
 
 # Number of sensors to process

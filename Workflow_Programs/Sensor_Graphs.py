@@ -223,10 +223,10 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time, force, and ADC data
-		instron_time = instron_data["Time [s]"].to_numpy()
-		instron_force = instron_data["Force [N]"].to_numpy()
-		updated_arduino_time = updated_arduino_data["Time [s]"].to_numpy()
-		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"].to_numpy()
+		instron_time = instron_data["Time [s]"]#.to_numpy()
+		instron_force = instron_data["Force [N]"]#.to_numpy()
+		updated_arduino_time = updated_arduino_data["Time [s]"]#.to_numpy()
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]#.to_numpy()
 		
 		# Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
 		aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
@@ -234,24 +234,24 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# Calculate force difference for export if needed
 		difference = instron_force - updated_arduino_force
 		
-		# Create dictionary for .mat export
-		data_dict = {
-			'instron_time': instron_time,
-			'instron_force': instron_force,
-			'updated_arduino_time': updated_arduino_time,
-			'updated_arduino_force': updated_arduino_force,
-			'difference': difference
-		}
-		
-		# Create filename for the .mat file (relevant to the sensor data)
-		file_name = f"/Users/jacobanderson/Downloads/Test_{TEST_NUM}_Sensor_{sensor_num}_calibrated_forces.mat"
-		
-		# Save the data to a .mat file
-		savemat(file_name, data_dict)
-		
-		print(f"Data for Sensor {sensor_num} saved to {file_name}")
-		
-		exit()
+		# # Create dictionary for .mat export
+		# data_dict = {
+		# 	'instron_time': instron_time,
+		# 	'instron_force': instron_force,
+		# 	'updated_arduino_time': updated_arduino_time,
+		# 	'updated_arduino_force': updated_arduino_force,
+		# 	'difference': difference
+		# }
+		#
+		# # Create filename for the .mat file (relevant to the sensor data)
+		# file_name = f"/Users/jacobanderson/Downloads/Test_{TEST_NUM}_Sensor_{sensor_num}_calibrated_forces.mat"
+		#
+		# # Save the data to a .mat file
+		# savemat(file_name, data_dict)
+		#
+		# print(f"Data for Sensor {sensor_num} saved to {file_name}")
+		#
+		# exit()
 		
 		# Ensure arrays are of equal length for accurate comparison
 		min_length = min(len(instron_data), len(updated_arduino_data))
