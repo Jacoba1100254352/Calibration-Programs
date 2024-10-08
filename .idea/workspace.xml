@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Graph continuity adjustments">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
-    </list>
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Updating IRB Arduino codes" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -111,7 +105,7 @@
       <workItem from="1727488589139" duration="2408000" />
       <workItem from="1727762894415" duration="6891000" />
       <workItem from="1727907267700" duration="692000" />
-      <workItem from="1728339911102" duration="5852000" />
+      <workItem from="1728339911102" duration="6252000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -361,7 +355,15 @@
       <option name="project" value="LOCAL" />
       <updated>1727764220171</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="Updating IRB Arduino codes">
+      <option name="closed" value="true" />
+      <created>1728353011640</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1728353011640</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -376,7 +378,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adding Boxcar averaging to the servo code" />
     <MESSAGE value="Adding more Neural Fit graphing functions" />
     <MESSAGE value="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
     <MESSAGE value="Reorganizing" />
@@ -401,7 +402,8 @@
     <MESSAGE value="Minor adjustments" />
     <MESSAGE value="Adjusting graphs features and moving around functions" />
     <MESSAGE value="Graph continuity adjustments" />
-    <option name="LAST_COMMIT_MESSAGE" value="Graph continuity adjustments" />
+    <MESSAGE value="Updating IRB Arduino codes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updating IRB Arduino codes" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
