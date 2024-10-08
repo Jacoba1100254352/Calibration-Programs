@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Adjusting graphs features and moving around functions">
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Graph continuity adjustments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
     </list>
@@ -107,7 +109,9 @@
       <workItem from="1726688957415" duration="72648000" />
       <workItem from="1727217829964" duration="9309000" />
       <workItem from="1727488589139" duration="2408000" />
-      <workItem from="1727762894415" duration="1289000" />
+      <workItem from="1727762894415" duration="6891000" />
+      <workItem from="1727907267700" duration="692000" />
+      <workItem from="1728339911102" duration="5852000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -349,7 +353,15 @@
       <option name="project" value="LOCAL" />
       <updated>1727372811118</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="Graph continuity adjustments">
+      <option name="closed" value="true" />
+      <created>1727764220171</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1727764220171</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -364,7 +376,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adding RTC calibration programs" />
     <MESSAGE value="Adding Boxcar averaging to the servo code" />
     <MESSAGE value="Adding more Neural Fit graphing functions" />
     <MESSAGE value="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
@@ -389,13 +400,14 @@
     <MESSAGE value="Adding MSE and MAE to both neural and poly as well as N vs N to poly for verification of calculations" />
     <MESSAGE value="Minor adjustments" />
     <MESSAGE value="Adjusting graphs features and moving around functions" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adjusting graphs features and moving around functions" />
+    <MESSAGE value="Graph continuity adjustments" />
+    <option name="LAST_COMMIT_MESSAGE" value="Graph continuity adjustments" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1727465617007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1726169460359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1727474509657" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1728345110709" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1727205456539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1727764010921" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1728348586419" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
   </component>
 </project>

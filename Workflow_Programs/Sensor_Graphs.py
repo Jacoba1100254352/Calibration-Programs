@@ -2,8 +2,8 @@
 import time
 
 from matplotlib.backends.backend_pdf import PdfPages
-from sklearn.metrics import mean_absolute_error
 from scipy.io import savemat
+from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
 # from Supplemental_Sensor_Graph_Functions import *
@@ -42,6 +42,8 @@ def analyze_and_graph_neural_fit(
 		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 		
 		for test_num in test_range:
+			if test_num == 11:
+				continue
 			# Load and prepare data
 			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(
 				sensor_num, test_num, bit_resolution, mapping
@@ -93,10 +95,10 @@ def analyze_and_graph_neural_fit(
 			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N] (Test {test_num})", linewidth=2)
 			residuals_ax.set_xlabel("Instron Force [N]")
 			residuals_ax.set_ylabel("Residuals [N]")
-			residuals_ax.set_title(f"Residuals: Sensor vs. Instron Force")
+			residuals_ax.set_title(f"Residuals with {units} neurons")
 			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
-			# residuals_ax.invert_xaxis()
+		# residuals_ax.invert_xaxis()
 		
 		# Save and show graphs
 		if save_graphs:

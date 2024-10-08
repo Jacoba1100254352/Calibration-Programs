@@ -6,11 +6,7 @@
 //        Verify these are correct before each use
 
 // calibration coefficients for each of the 4 sensors
-double coeff[4][2] = {
-    {0.00044280040320890596, -0.5050597471251378},
-    {0.0005175249382435472, -1.9120768781888338},
-    {0.0005141246242903676, -1.7785060726647088},
-    {0.0005076996083303595, -1.6477909546137066}}; // Calibrated
+double coeff[4][2] = { { 0.0005058595803581391, -1.7906740925859557 }, { 0.0004993074664677589, -1.736020155144985 }, { 0.0004958161137394561, -1.8498889696279481 }, { 0.0005027586174536713, -1.6852990470459193 } } // Sensor Set 3 (CM) // Oct 7
 
 #define STARTING_SETPOINT 3.0 // (kPa) Can't exceed 10
 #define DIASTOLIC_PRESSURE                                                     \
