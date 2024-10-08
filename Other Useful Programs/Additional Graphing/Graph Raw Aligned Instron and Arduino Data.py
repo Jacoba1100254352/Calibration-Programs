@@ -35,7 +35,7 @@ def plot_sensor_data(arduino_time, arduino_force, instron_time, instron_force, s
 	fig, ax1 = plt.subplots(figsize=(10, 6))
 	ax1.plot(arduino_time, arduino_force, label=f"Uncalibrated Sensor [ADC] (Test {TEST_NUM})", color="red")
 	ax1.set_xlabel("Time [s]")
-	ax1.set_ylabel("Uncalibrated Sensor [ADC]", color="red")
+	ax1.set_ylabel("Uncalibrated Sensor Scaled [ADC]", color="red")
 	ax1.tick_params(axis="y", labelcolor="red")
 	
 	ax2 = ax1.twinx()
@@ -50,6 +50,30 @@ def plot_sensor_data(arduino_time, arduino_force, instron_time, instron_force, s
 	plt.title(f"Overlay: Uncalibrated Sensor vs Instron Force")
 	plt.grid(True)
 	plt.show()
+	plt.close()
+	
+	plt.figure(figsize=(10, 6))
+	plt.plot(instron_time, arduino_force-instron_force, '-', label=f"Uncalibrated Force Difference", linewidth=2)
+	plt.xlabel("Time [s]")
+	plt.ylabel("Force Difference")
+	plt.legend(loc="lower left")
+	plt.title(f"Force Difference: Scaled Uncalibrated Sensor vs Instron Force")
+	plt.grid(True)
+	
+	plt.show()
+
+
+def scale_force_data(force_data):
+	"""
+	Scale force data to the range 0 to -1.
+
+	:param force_data: Array-like, force data to be scaled.
+	:return: Scaled force data.
+	"""
+	max_force = max(abs(force_data))
+	scaled_force = force_data / max_force  # This will scale the data between -1 and 1
+	scaled_force = scaled_force  # Adjust to shift to range 0 to -1
+	return scaled_force
 
 
 # Running the analysis and plotting the results
@@ -58,7 +82,12 @@ for sensor_num in range(2, 3):
 	instron_filename = "../" + str(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
 	
 	arduino_time, arduino_force = pd.read_csv(arduino_filename)["Time [s]"], pd.read_csv(arduino_filename)[
-		f"ADC" if SIMPLIFY else f"ADC{sensor_num}"]  #read_sensor_data(arduino_filename)
+		f"ADC" if SIMPLIFY else f"ADC{sensor_num}"]  # read_sensor_data(arduino_filename)
 	instron_time, instron_force = read_sensor_data(instron_filename)
 	
-	# ins
+	# Scale arduino force to 0 to -1 range
+	arduino_force = scale_force_data(arduino_force-min(arduino_force))
+	
+	# instron_force = apply_smoothing(instron_force, method="boxcar", window_size=100, poly_order=None)
+	# arduino_force = apply_smoothing(arduino_force, method="boxcar", window_size=100, poly_order=None)
+	plot_sensor_data(arduino_time, -arduino_force, instron_time, instron_force, sensor_num)

@@ -4,13 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="">
+    <list default="true" id="0074d027-ac32-4c03-bc90-d96a0a97b19d" name="Changes" comment="Updating Plotting functions and adding Error_Plots">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Arduino Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Arduino Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -390,7 +387,15 @@
       <option name="project" value="LOCAL" />
       <updated>1728353211540</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="Updating Plotting functions and adding Error_Plots">
+      <option name="closed" value="true" />
+      <created>1728413161546</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1728413161546</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -405,7 +410,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Very much improved fit for analyze_and_graph_neural_fit_single_pdf_combined_multiple_tests" />
     <MESSAGE value="Reorganizing" />
     <MESSAGE value="Quantization model 1" />
     <MESSAGE value="Moving extra functions to new file and adding quantization to neural fit" />
@@ -430,7 +434,8 @@
     <MESSAGE value="Graph continuity adjustments" />
     <MESSAGE value="Updating IRB Arduino codes" />
     <MESSAGE value="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;Workflow_Programs/Sensor_Graphs.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;Workflow_Programs/Sensor_Graphs.py" />
+    <MESSAGE value="Updating Plotting functions and adding Error_Plots" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updating Plotting functions and adding Error_Plots" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
@@ -439,6 +444,6 @@
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1728345110709" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1727205456539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1728353716258" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Aligned_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Aligned Instron and Arduino Data Coverage Results" MODIFIED="1728408996939" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Aligned_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Aligned Instron and Arduino Data Coverage Results" MODIFIED="1728413732321" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
   </component>
 </project>
