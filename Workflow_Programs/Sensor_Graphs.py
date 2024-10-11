@@ -2,7 +2,6 @@
 import time
 
 from matplotlib.backends.backend_pdf import PdfPages
-from scipy.io import savemat
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
@@ -71,15 +70,18 @@ def analyze_and_graph_neural_fit(
 			# Print MSE and MAE for each test
 			print(f"Test {test_num}, Neural Network Fit: MSE={mse_nn:.6f}, MAE={mae_nn:.6f}")
 			
-			# Apply smoothing to residuals
-			residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
-			# targets = apply_smoothing(targets, method=smoothing_method, window_size=window_size, poly_order=poly_order)
-			# outputs = apply_smoothing(outputs, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			# Apply smoothing to residuals # DO NOT USE ANYMORE (Smoothing applied to adc initially now)
+			if smoothing_method is not None:
+				residuals = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+				targets = apply_smoothing(targets, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+				outputs = apply_smoothing(outputs, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 			
-			overlay_ax.set_xlim([0, -1])
-			residuals_ax.set_xlim([0, -1])
+			# Set x-axis limits to 0-1
+			overlay_ax.set_xlim([0, 1])
+			residuals_ax.set_xlim([0, 1])
 			
 			# First Graph: Plot calibrated sensor N vs Instron N
+			# Output = Calibrated Sensor N, Target = Instron N
 			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)
 			overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N] (Test {test_num})", linewidth=2)
 			
@@ -92,10 +94,10 @@ def analyze_and_graph_neural_fit(
 			# overlay_ax.invert_xaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
-			residuals_ax.plot(instron_force.flatten(), residuals_smoothed, label=f"Residuals [N] (Test {test_num})", linewidth=2)
+			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Residuals [N] (Test {test_num})", linewidth=2)
 			residuals_ax.set_xlabel("Instron Force [N]")
 			residuals_ax.set_ylabel("Residuals [N]")
-			residuals_ax.set_title(f"Residuals with {units} neurons")
+			residuals_ax.set_title(f"Residuals with {units}-neuron, {bit_resolution}-bit model")
 			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
 		# residuals_ax.invert_xaxis()
@@ -187,9 +189,7 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				print(f"Test {_TEST_NUM}, Polynomial Fit (Order {order}): MSE={mse_poly:.6f}, MAE={mae_poly:.6f}")
 				
 				# Apply smoothing using the specified method
-				residuals_smoothed = apply_smoothing(
-					residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order
-				)
+				residuals_smoothed = residuals  # apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 				
 				# Plot the smoothed residuals
 				plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
@@ -223,10 +223,10 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time, force, and ADC data
-		instron_time = instron_data["Time [s]"]#.to_numpy()
-		instron_force = instron_data["Force [N]"]#.to_numpy()
-		updated_arduino_time = updated_arduino_data["Time [s]"]#.to_numpy()
-		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]#.to_numpy()
+		instron_time = instron_data["Time [s]"]  # .to_numpy()
+		instron_force = instron_data["Force [N]"]  # .to_numpy()
+		updated_arduino_time = updated_arduino_data["Time [s]"]  # .to_numpy()
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]  # .to_numpy()
 		
 		# Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
 		aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
@@ -307,16 +307,18 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		plt.figure(figsize=(10, 6))
 		plt.scatter(instron_force, residuals, label="Residuals", color="green")
 		
-		# Calculate a simple moving average of the residuals
-		window_size = 1000  # Choose a window size that makes sense for your data
-		residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
+		# THIS IS REMOVED AS THEY SHOULD ALREADY HAVE BEEN SMOOTHED AT THIS POINT (and this is excessive)
+		# # Calculate a simple moving average of the residuals
+		# window_size = 1000  # Choose a window size that makes sense for your data
+		# residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
+		#
+		# # To plot the smoothed residuals, we need to adjust the x-axis (instron_force) due to the convolution operation
+		# # This adjustment depends on the 'mode' used in np.convolve. With 'valid', the length of the output is N - K + 1
+		# instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis
+		#
+		# plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue", linewidth=2)
+		# plt.axhline(y=0, color='r', linestyle='-')
 		
-		# To plot the smoothed residuals, we need to adjust the x-axis (instron_force) due to the convolution operation
-		# This adjustment depends on the 'mode' used in np.convolve. With 'valid', the length of the output is N - K + 1
-		instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis
-		
-		plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue", linewidth=2)
-		plt.axhline(y=0, color='r', linestyle='-')
 		plt.xlabel("Instron Force [N]")
 		plt.ylabel("Residuals")
 		plt.legend()
@@ -342,12 +344,17 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			predicted_adc_force = polynomial(instron_force)
 			residuals = arduino_force - predicted_adc_force
 			
-			# Smooth the residuals
-			residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-			instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis for smoothed residuals
+			# THIS IS REMOVED AS THEY SHOULD ALREADY HAVE BEEN SMOOTHED AT THIS POINT (and this is excessive)
+			# # Smooth the residuals
+			# residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
+			# instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis for smoothed residuals
+			#
+			# plt.figure(figsize=(10, 6))
+			# plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Order {order} smoothed residuals",
+			#          linewidth=2)
 			
 			plt.figure(figsize=(10, 6))
-			plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Order {order} smoothed residuals",
+			plt.plot(instron_force, residuals, '-', label=f"Order {order} residuals",
 			         linewidth=2)
 			
 			if order == 1:

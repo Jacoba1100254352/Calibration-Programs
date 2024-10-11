@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import pandas as pd
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from Workflow_Programs.Configuration_Variables import *
 from Workflow_Programs.Supplemental_Sensor_Graph_Functions import apply_smoothing
@@ -53,7 +53,7 @@ def plot_sensor_data(arduino_time, arduino_force, instron_time, instron_force, s
 	plt.close()
 	
 	plt.figure(figsize=(10, 6))
-	plt.plot(instron_time, arduino_force-instron_force, '-', label=f"Uncalibrated Force Difference", linewidth=2)
+	plt.plot(instron_time, arduino_force - instron_force, '--', label=f"Uncalibrated Force Difference", linewidth=2, color="green")
 	plt.xlabel("Time [s]")
 	plt.ylabel("Force Difference")
 	plt.legend(loc="lower left")
@@ -76,6 +76,20 @@ def scale_force_data(force_data):
 	return scaled_force
 
 
+def calculate_errors(arduino_force, instron_force):
+	"""
+	Calculate the Mean Squared Error (MSE) and Mean Absolute Error (MAE) between two datasets.
+
+	:param arduino_force: Array-like, force data from Arduino.
+	:param instron_force: Array-like, force data from Instron.
+	:return: Tuple, (mse, mae).
+	"""
+	mse = mean_squared_error(instron_force, arduino_force)
+	mae = mean_absolute_error(instron_force, arduino_force)
+	
+	return mse, mae
+
+
 # Running the analysis and plotting the results
 for sensor_num in range(2, 3):
 	arduino_filename = "../" + str(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
@@ -86,8 +100,14 @@ for sensor_num in range(2, 3):
 	instron_time, instron_force = read_sensor_data(instron_filename)
 	
 	# Scale arduino force to 0 to -1 range
-	arduino_force = scale_force_data(arduino_force-min(arduino_force))
+	arduino_force = scale_force_data(arduino_force - min(arduino_force))
 	
-	# instron_force = apply_smoothing(instron_force, method="boxcar", window_size=100, poly_order=None)
-	# arduino_force = apply_smoothing(arduino_force, method="boxcar", window_size=100, poly_order=None)
+	instron_force = apply_smoothing(instron_force, method="boxcar", window_size=100, poly_order=None)
+	arduino_force = apply_smoothing(arduino_force, method="boxcar", window_size=100, poly_order=None)
+	
+	# Calculate errors
+	mse, mae = calculate_errors(arduino_force, instron_force)
+	print(f"Sensor {sensor_num} - MSE: {mse:.6f}, MAE: {mae:.6f}")
+	
+	# Plot sensor data
 	plot_sensor_data(arduino_time, -arduino_force, instron_time, instron_force, sensor_num)

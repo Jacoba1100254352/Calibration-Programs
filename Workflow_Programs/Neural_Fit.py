@@ -8,15 +8,15 @@ from Supplemental_Sensor_Graph_Functions import *
 def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='ADC_vs_N'):
 	# Load data for the current test
 	instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=test_num))
-	arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
+	arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
 	
 	min_length = min(len(instron_data), len(arduino_data))
 	instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
 	sensor_adc = arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values.reshape(-1, 1)
 	
 	# Optional quantization step (if needed)
-	instron_force_quantized = quantize_data(instron_force.flatten(), bit_resolution)
-	sensor_adc_quantized = quantize_data(sensor_adc.flatten(), bit_resolution)
+	instron_force_quantized = -quantize_data(instron_force.flatten(), bit_resolution)
+	sensor_adc_quantized = -quantize_data(sensor_adc.flatten(), bit_resolution)
 	
 	# Depending on the mapping, set inputs and targets
 	if mapping == 'ADC_vs_N':

@@ -772,6 +772,7 @@ help you set up a robust and fair comparison for your paper.
   any performance differences are due to the models themselves, not the data.
 
 #### **iv. Does the training data need to be already aligned/correct data or can it just be some other data that I have that would also need
+
 to be calibrated?**
 
 - **Training Data Must Be Aligned and Correct:**
@@ -994,9 +995,9 @@ def analyze_and_graph_residuals_single_pdf(test_range, calibration_method='polyf
 				plt.gca().invert_xaxis()
 				pdf.savefig()
 				plt.close()
-				
-				# Optionally, plot residuals with slope correction
-				# Similar to your existing code
+			
+			# Optionally, plot residuals with slope correction
+			# Similar to your existing code
 ```
 
 ### **E. Running the Calibration and Comparison:**

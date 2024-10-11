@@ -1,4 +1,5 @@
 from Configuration_Variables import *
+from Workflow_Programs.Supplemental_Sensor_Graph_Functions import apply_smoothing
 
 
 displacement = 0
@@ -55,6 +56,11 @@ def align_and_save_data(sensor_num, parsed_instron_data, parsed_arduino_data):
 	min_length = min(len(parsed_instron_data), len(parsed_arduino_data))
 	aligned_instron_data = parsed_instron_data.head(min_length)
 	aligned_arduino_data = parsed_arduino_data.head(min_length)
+	
+	# Smooth arduino ADC values
+	# aligned_arduino_data.loc[:, adc_columns] = apply_smoothing(aligned_arduino_data[adc_columns], "boxcar", 100, None)
+	aligned_arduino_data.loc[:, adc_columns] = apply_smoothing(
+		aligned_arduino_data[adc_columns].copy(), "boxcar", 100, None).astype(np.int64)
 	
 	# Get the aligned data directory names
 	aligned_arduino_data_dir = get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num)

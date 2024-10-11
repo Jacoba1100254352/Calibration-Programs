@@ -57,7 +57,7 @@ def plot_all_sensors(IRB_DATA, test_num):
 	for sensor_num in range(1, 1 + 1):
 		parsed_arduino_data = pd.read_csv(path_adjustment + str(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num)))
 		arduino_time, arduino_force = read_uncalibrated_arduino_data(parsed_arduino_data, sensor_num, IRB_DATA)
-		#plt.plot(arduino_time, [inner_list[sensor_num - 1] for inner_list in arduino_force], label=f"Sensor {sensor_num}", color=colors(sensor_num - 1))
+		# plt.plot(arduino_time, [inner_list[sensor_num - 1] for inner_list in arduino_force], label=f"Sensor {sensor_num}", color=colors(sensor_num - 1))
 		plt.plot(arduino_time, arduino_force, label=f"Sensor {sensor_num}", color=colors(sensor_num - 1))
 	
 	# Add labels, title, legend, and grid

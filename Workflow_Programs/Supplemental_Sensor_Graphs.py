@@ -195,7 +195,7 @@ def graph_sensor_data(save_graphs=True):
 	for sensor_num in SENSORS_RANGE:
 		# Load data from CSV files
 		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
-		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
+		updated_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time and force data
 		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]

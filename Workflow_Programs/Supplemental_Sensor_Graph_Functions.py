@@ -107,7 +107,7 @@ def apply_smoothing(residuals, method, window_size, poly_order):
 	Apply smoothing to the residuals using the specified method.
 
 	Parameters:
-	- residuals: The residual data to be smoothed.
+	- residuals: DataFrame or Series, the residual data to be smoothed.
 	- method: The smoothing method ('savgol', 'boxcar', 'median', or None).
 	- window_size: The window size for the smoothing operation.
 	- poly_order: The polynomial order for Savitzky-Golay filter (only used if method is 'savgol').
@@ -115,34 +115,39 @@ def apply_smoothing(residuals, method, window_size, poly_order):
 	Returns:
 	- smoothed_residuals: The smoothed residuals.
 	"""
-	if isinstance(residuals, pd.Series):
-		residuals = residuals.values.flatten()  # Convert Pandas Series to NumPy array and flatten
-	else:
-		residuals = residuals.flatten()  # If it's already a NumPy array, just flatten it
 	
-	if method == 'savgol':
-		if window_size is None:
-			raise ValueError("Window size must be specified for Savitzky-Golay smoothing.")
-		smoothed_residuals = savgol_filter(residuals, window_length=window_size, polyorder=poly_order)
-	elif method == 'boxcar':
-		if window_size is None:
-			raise ValueError("Window size must be specified for boxcar smoothing.")
-		smoothed_residuals = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-		smoothed_residuals = np.pad(smoothed_residuals, (window_size // 2, window_size // 2), mode='edge')
-		if len(smoothed_residuals) > len(residuals):
-			smoothed_residuals = smoothed_residuals[:len(residuals)]
-		elif len(smoothed_residuals) < len(residuals):
-			smoothed_residuals = np.pad(smoothed_residuals, (0, len(residuals) - len(smoothed_residuals)), 'edge')
-	elif method == 'median':
-		if window_size is None:
-			raise ValueError("Window size must be specified for median filtering.")
-		if window_size % 2 == 0:  # Ensure window_size is odd
-			window_size += 1
-		smoothed_residuals = medfilt(residuals, kernel_size=window_size)
-	else:
-		smoothed_residuals = residuals
+	def smooth_column(data_column, window_size):
+		""" Helper function to smooth individual columns. """
+		if method == 'savgol':
+			if window_size is None:
+				raise ValueError("Window size must be specified for Savitzky-Golay smoothing.")
+			return savgol_filter(data_column, window_length=window_size, polyorder=poly_order)
+		elif method == 'boxcar':
+			if window_size is None:
+				raise ValueError("Window size must be specified for boxcar smoothing.")
+			smoothed = np.convolve(data_column, np.ones(window_size) / window_size, mode='valid')
+			smoothed = np.pad(smoothed, (window_size // 2, window_size // 2), mode='edge')
+			if len(smoothed) > len(data_column):
+				return smoothed[:len(data_column)]
+			elif len(smoothed) < len(data_column):
+				return np.pad(smoothed, (0, len(data_column) - len(smoothed)), 'edge')
+		elif method == 'median':
+			if window_size is None:
+				raise ValueError("Window size must be specified for median filtering.")
+			if window_size % 2 == 0:  # Ensure window_size is odd
+				window_size += 1
+			return medfilt(data_column, kernel_size=window_size)
+		else:
+			return data_column
 	
-	return smoothed_residuals
+	# If the input is a DataFrame, apply smoothing to each column
+	if isinstance(residuals, pd.DataFrame):
+		for col in residuals.columns:
+			residuals[col] = smooth_column(residuals[col].values.flatten(), window_size)
+	else:
+		residuals = smooth_column(residuals, window_size)
+	
+	return residuals
 
 
 # Helper function for quantizing data (if using custom bit resolutions for inputs/outputs)
