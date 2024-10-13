@@ -85,7 +85,7 @@ def analyze_and_graph_neural_fit_per_test(
 			plt.plot(instron_force_plot, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)
 		
 		# Finalize the plot
-		plt.xlabel("Instron Force [N]")
+		plt.xlabel("Calibration Force [N]")
 		plt.ylabel("Residual Force [N]")
 		plt.title(f"Residuals for Neural Fit for Sensor {sensor_num} Across All Tests")
 		plt.legend(loc="lower left")
@@ -162,7 +162,7 @@ def train_and_graph_neural_fit_per_test(
 		residuals = updated_arduino_force - fitted_values
 		
 		# Apply smoothing to residuals, if necessary
-		residuals_smoothed = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+		residuals_smoothed = residuals  # apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
 		
 		# Ensure instron_force and residuals_smoothed have the same length
 		instron_force_plot = instron_force[:len(residuals_smoothed)]
@@ -171,7 +171,7 @@ def train_and_graph_neural_fit_per_test(
 		plt.plot(instron_force_plot, residuals_smoothed, label=f"Test {_TEST_NUM}", linewidth=2)
 	
 	# Finalize the graph
-	plt.xlabel("Instron Force [N]")
+	plt.xlabel("Calibration Force [N]")
 	plt.ylabel("Predicted Force [N]")
 	plt.title(f"Neural Network Fits for Sensor {sensor_num} Across Tests")
 	plt.legend(loc="lower right")
@@ -422,7 +422,7 @@ def graph_sensor_instron_error():
 		# Plotting force comparison
 		plt.figure(figsize=(10, 6))
 		instron_force -= line_of_best_fit_instron
-		plt.plot(instron_time, instron_force, label="Instron Force Error", color="orange", linestyle=":")
+		plt.plot(instron_time, instron_force, label="Calibration Force Error", color="orange", linestyle=":")
 		
 		plt.xlabel("Time [s]")
 		plt.ylabel("Force [N]")
@@ -510,12 +510,12 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		
 		# Second plot: Relationship between Instron force and Arduino ADC values
 		plt.figure(figsize=(10, 6))
-		plt.scatter(instron_force, arduino_force, label=f"Instron Force vs. Arduino {arduino_force_type}", color="purple")
-		plt.xlabel("Instron Force [N]")
+		plt.scatter(instron_force, arduino_force, label=f"Calibration Force vs. Arduino {arduino_force_type}", color="purple")
+		plt.xlabel("Calibration Force [N]")
 		plt.ylabel(f"Arduino {arduino_force_type} Values")
 		plt.legend()
 		plt.title(
-			f"Relationship Between Instron Force and Arduino {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+			f"Relationship Between Calibration Force and Arduino {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
 		plt.grid(True)
 		
 		# Invert the x-axis
@@ -532,7 +532,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		plt.figure(figsize=(10, 6))
 		plt.scatter(instron_force, arduino_force, label="Actual Data", color="purple")
 		plt.plot(instron_force, lin_fit, label="Best-fit line", color="orange")
-		plt.xlabel("Instron Force [N]")
+		plt.xlabel("Calibration Force [N]")
 		plt.ylabel(f"Arduino {arduino_force_type} Values")
 		plt.legend()
 		plt.title(
@@ -562,7 +562,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		
 		plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue", linewidth=2)
 		plt.axhline(y=0, color='r', linestyle='-')
-		plt.xlabel("Instron Force [N]")
+		plt.xlabel("Calibration Force [N]")
 		plt.ylabel("Residuals")
 		plt.legend()
 		plt.title(
@@ -600,7 +600,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 				average_residual = np.mean(residuals)
 				plt.axhline(y=average_residual, color='r', linestyle='-', label="Average Residual")
 			
-			plt.xlabel("Instron Force [N]")
+			plt.xlabel("Calibration Force [N]")
 			plt.ylabel(f"Arduino {arduino_force_type}")
 			plt.legend()
 			plt.title(f"Smoothed Residuals for Polynomial Fit of Order {order} - Sensor {sensor_num}")
@@ -662,13 +662,13 @@ def analyze_and_graph_residuals_and_fits_single_pdf(test_range):
 				
 				# Second plot: Relationship between Instron force and Arduino ADC values
 				plt.figure(figsize=(10, 6))
-				plt.scatter(instron_force, updated_arduino_adc_force, label="Instron Force vs. Arduino ADC",
+				plt.scatter(instron_force, updated_arduino_adc_force, label="Calibration Force vs. Arduino ADC",
 				            color="purple")
-				plt.xlabel("Instron Force [N]")
+				plt.xlabel("Calibration Force [N]")
 				plt.ylabel(f"Arduino ADC{sensor_num} Values")
 				plt.legend()
 				plt.title(
-					f"Relationship Between Instron Force and Arduino ADC{sensor_num} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {_TEST_NUM}")
+					f"Relationship Between Calibration Force and Arduino ADC{sensor_num} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {_TEST_NUM}")
 				plt.grid(True)
 				
 				# Invert the x-axis
@@ -686,7 +686,7 @@ def analyze_and_graph_residuals_and_fits_single_pdf(test_range):
 				plt.figure(figsize=(10, 6))
 				plt.scatter(instron_force, updated_arduino_adc_force, label="Actual Data", color="purple")
 				plt.plot(instron_force, lin_fit, label="Best-fit line", color="orange")
-				plt.xlabel("Instron Force [N]")
+				plt.xlabel("Calibration Force [N]")
 				plt.ylabel(f"Arduino ADC{sensor_num} Values")
 				plt.legend()
 				plt.title(
@@ -716,7 +716,7 @@ def analyze_and_graph_residuals_and_fits_single_pdf(test_range):
 				plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue",
 				         linewidth=2)
 				plt.axhline(y=0, color='r', linestyle='-')
-				plt.xlabel("Instron Force [N]")
+				plt.xlabel("Calibration Force [N]")
 				plt.ylabel("Residuals")
 				plt.legend()
 				plt.title(
@@ -754,7 +754,7 @@ def analyze_and_graph_residuals_and_fits_single_pdf(test_range):
 						average_residual = np.mean(residuals)
 						plt.axhline(y=average_residual, color='r', linestyle='-', label="Average Residual")
 					
-					plt.xlabel("Instron Force [N]")
+					plt.xlabel("Calibration Force [N]")
 					plt.ylabel("Residuals")
 					plt.legend()
 					plt.title(f"Smoothed Residuals for Polynomial Fit of Order {order} - Sensor {sensor_num}")
@@ -802,7 +802,7 @@ def analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(
 					
 					plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Test {_TEST_NUM}, Sensor {sensor_num}", linewidth=2)
 			
-			plt.xlabel("Instron Force [N]")
+			plt.xlabel("Calibration Force [N]")
 			plt.ylabel("Residuals")
 			plt.legend()
 			plt.title(f"Smoothed Residuals for Polynomial Fit of Order {order} - Combined Tests")
@@ -834,9 +834,9 @@ def plot_Instron_force_vs_Arduino_force(test_num, sensor_num, show_graphs=True, 
 	
 	plt.figure(figsize=(10, 6))
 	
-	plt.scatter(instron_force, updated_arduino_force, label="Instron Force [N] vs. Arduino Force [N]", color="purple")
+	plt.scatter(instron_force, updated_arduino_force, label="Calibration Force [N] vs. Arduino Force [N]", color="purple")
 	
-	plt.xlabel("Instron Force [N]")
+	plt.xlabel("Calibration Force [N]")
 	plt.ylabel("Calibrated Arduino Force [N]")
 	plt.legend()
 	plt.title(f"Force [N] Instron vs. Arduino for Sensor {sensor_num}, Test {test_num}")
@@ -849,7 +849,7 @@ def plot_Instron_force_vs_Arduino_force(test_num, sensor_num, show_graphs=True, 
 		
 		# Plot the best-fit line over the scatter plot
 		plt.plot(instron_force, lin_fit, label="Best-fit line", color="orange")
-		plt.xlabel("Instron Force [N]")
+		plt.xlabel("Calibration Force [N]")
 		plt.ylabel(f"Arduino Force [N] Values")
 		plt.legend()
 		plt.title(
@@ -909,7 +909,7 @@ def plot_adjusted_linear_fits(test_range):
 			
 			plt.plot(instron_force, adjusted_fit, label=f"Test {_TEST_NUM}, Sensor {sensor_num}")
 	
-	plt.xlabel("Instron Force [N]")
+	plt.xlabel("Calibration Force [N]")
 	plt.ylabel("Adjusted ADC Values")
 	plt.legend()
 	plt.title("Adjusted Linear Fits with Normalized Slopes Across Tests")
@@ -1043,7 +1043,7 @@ def graph_and_verify_calibration():
 	plt.xlabel("Time [s]")
 	plt.ylabel("Force [N]")
 	plt.legend()
-	plt.title(f"Previous Calibration and Instron Force Difference for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+	plt.title(f"Previous Calibration and Calibration Force Difference for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
 	plt.grid(True)
 	
 	plt.show()

@@ -217,13 +217,13 @@ def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):
 		# Plot calibrated N values (Y) vs Instron N (X)
 		x = targets.flatten()  # Instron N
 		y_pred = outputs.flatten()  # Predicted N (Calibrated)
-		xlabel = "Instron Force [N]"
+		xlabel = "Calibration Force [N]"
 		ylabel = "Calibrated Force [N]"
 	elif mapping == 'ADC_vs_N':
 		# Plot ADC vs Instron N
 		x = targets.flatten()  # Instron N
 		y_pred = outputs.flatten()  # Predicted ADC
-		xlabel = "Instron Force [N]"
+		xlabel = "Calibration Force [N]"
 		ylabel = "ADC Value"
 	else:
 		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
@@ -235,7 +235,7 @@ def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):
 
 
 def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
-	x = instron_force.flatten()  # Instron Force (N) is the baseline
+	x = instron_force.flatten()  # Calibration Force (N) is the baseline
 	
 	# Invert the x-axis to make the direction go from larger to smaller
 	residuals_ax.invert_xaxis()
@@ -243,12 +243,12 @@ def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
 	if mapping == 'N_vs_N':
 		# First graph: Residuals in N vs Instron N
 		residuals_ax.plot(x, residuals, label=f"Residuals [N] (Test {test_num})", linewidth=2)  # (Test {test_num})
-		residuals_ax.set_xlabel("Instron Force [N]")
+		residuals_ax.set_xlabel("Calibration Force [N]")
 		residuals_ax.set_ylabel("Residuals [N]")
 	elif mapping == 'ADC_vs_N':
 		# Second graph: Residuals in ADC vs Instron N
 		residuals_ax.plot(x, residuals, label=f"Residuals [ADC] (Test {test_num})", linewidth=2)  # (Test {test_num})
-		residuals_ax.set_xlabel("Instron Force [N]")
+		residuals_ax.set_xlabel("Calibration Force [N]")
 		residuals_ax.set_ylabel("Residuals [ADC]")
 	else:
 		raise ValueError("Invalid mapping type. Use 'N_vs_N' or 'ADC_vs_N'.")

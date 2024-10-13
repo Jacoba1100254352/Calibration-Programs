@@ -2,6 +2,7 @@
 import time
 
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
@@ -18,7 +19,7 @@ SIZE_LARGE = 16
 plt.rc("font", weight="normal")  # controls default font
 plt.rc("font", size=SIZE_DEFAULT)  # controls default text sizes
 plt.rc("axes", titlesize=SIZE_LARGE)  # fontsize of the axes title
-plt.rc("axes", labelsize=SIZE_LARGE)  # fontsize of the x and y labels
+plt.rc("axes", labelsize=20)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
 plt.rc("ytick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
 
@@ -27,17 +28,16 @@ seed_value = 42  # Or any other integer
 
 def analyze_and_graph_neural_fit(
 	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5, l2_reg=0.01,
-	learning_rate=0.001, epochs=100, batch_size=32, window_size=100, poly_order=None,
-	smoothing_method="boxcar", save_graphs=True, show_graphs=True, bit_resolution=12,
-	enable_hyperparameter_tuning=False, mapping='N_vs_N',
-	hyperparams_dict=None
+	learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True, show_graphs=True, bit_resolution=12,
+	enable_hyperparameter_tuning=False, mapping='N_vs_N', hyperparams_dict=None
 ):
 	plt.close('all')
+	print(f"Neurons: {units}, bit resolution: {bit_resolution}")
 	
 	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
 		# Set up figures and axes for overlay and residuals
-		overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))
+		# overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))
 		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 		
 		for test_num in test_range:
@@ -63,40 +63,44 @@ def analyze_and_graph_neural_fit(
 			# Evaluate model and calculate residuals
 			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
 			
-			# Calculate MSE and MAE
+			# Calculate MSE and RMSE
 			mse_nn = mean_squared_error(targets.flatten(), outputs.flatten())
-			mae_nn = mean_absolute_error(targets.flatten(), outputs.flatten())
+			rmse_nn = np.sqrt(mse_nn)  # Calculate RMSE from MSE
 			
-			# Print MSE and MAE for each test
-			print(f"Test {test_num}, Neural Network Fit: MSE={mse_nn:.6f}, MAE={mae_nn:.6f}")
-			
-			# Apply smoothing to residuals # DO NOT USE ANYMORE (Smoothing applied to adc initially now)
-			if smoothing_method is not None:
-				residuals = apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
-				targets = apply_smoothing(targets, method=smoothing_method, window_size=window_size, poly_order=poly_order)
-				outputs = apply_smoothing(outputs, method=smoothing_method, window_size=window_size, poly_order=poly_order)
+			# Print RMSE and MAE for each test
+			print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
 			
 			# Set x-axis limits to 0-1
-			overlay_ax.set_xlim([0, 1])
+			# overlay_ax.set_xlim([0, 1])
 			residuals_ax.set_xlim([0, 1])
+			
+			# Find the index where the Instron force first reaches the threshold
+			force_threshold = 0.01
+			truncate_index = np.argmax(targets >= force_threshold)  # NumPy equivalent for Pandas .ge()
+			
+			# Truncate all datasets from this index onwards to ensure consistent lengths
+			# targets = targets[truncate_index:]
+			# outputs = outputs[truncate_index:]
+			residuals = residuals[truncate_index:]
+			instron_force = instron_force[truncate_index:]  # Ensure instron_force is also truncated
 			
 			# First Graph: Plot calibrated sensor N vs Instron N
 			# Output = Calibrated Sensor N, Target = Instron N
-			overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)
-			overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N] (Test {test_num})", linewidth=2)
-			
-			# Customize the graph appearance
-			overlay_ax.set_xlabel("Instron Force [N]")
-			overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
-			overlay_ax.set_title(f"Neural Fit: Sensor vs. Instron Force ({bit_resolution}-bit)")  # Sensor-Instron Force Relationship with Neural Fit (12-bit)
-			overlay_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
-			overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
+			# overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)
+			# overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N] (Test {test_num})", linewidth=2)
+			#
+			# # Customize the graph appearance
+			# overlay_ax.set_xlabel("Calibration Force [N]")
+			# overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
+			# overlay_ax.set_title(f"Neural Fit: Sensor vs. Calibration Force ({bit_resolution}-bit)")  # Sensor-Calibration Force Relationship with Neural Fit (12-bit)
+			# overlay_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
+			# overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
 			# overlay_ax.invert_xaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
-			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Residuals [N] (Test {test_num})", linewidth=2)
-			residuals_ax.set_xlabel("Instron Force [N]")
-			residuals_ax.set_ylabel("Residuals [N]")
+			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Residuals (N) (Test {test_num})", linewidth=2)
+			residuals_ax.set_xlabel("Calibration Force (N)")
+			residuals_ax.set_ylabel("Residuals (N)")
 			residuals_ax.set_title(f"Residuals with {units}-neuron, {bit_resolution}-bit model")
 			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
@@ -104,13 +108,13 @@ def analyze_and_graph_neural_fit(
 		
 		# Save and show graphs
 		if save_graphs:
-			pdf.savefig(overlay_fig)
+			# pdf.savefig(overlay_fig)
 			pdf.savefig(residuals_fig)
 		
 		if show_graphs:
 			plt.show()
 		
-		plt.close(overlay_fig)
+		# plt.close(overlay_fig)
 		plt.close(residuals_fig)
 
 
@@ -150,15 +154,15 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				
 				# Ensure arrays are of equal length for accurate comparison
 				min_length = min(len(instron_data), len(updated_arduino_data))
-				instron_force = instron_data["Force [N]"].iloc[:min_length]
+				instron_force = instron_data["Force (N)"].iloc[:min_length]
 				
 				# Depending on mapping, choose data for updated_arduino_force and set labels
 				if mapping == 'N_vs_N':
 					# Use calibrated force data
-					calibrated_force_column = "Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"
+					calibrated_force_column = "Force (N)" if SIMPLIFY else f"Force{sensor_num} (N)"
 					if calibrated_force_column in updated_arduino_data.columns:
 						updated_arduino_force = updated_arduino_data[calibrated_force_column].iloc[:min_length]
-						ylabel = "Residual Force [N]"
+						ylabel = "Residual Force (N)"
 					else:
 						print(f"Calibrated force data not found for sensor {sensor_num} in test {_TEST_NUM}.")
 						continue  # Skip this test if calibrated data is missing
@@ -167,7 +171,7 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 					adc_column = "ADC" if SIMPLIFY else f"ADC{sensor_num}"
 					if adc_column in updated_arduino_data.columns:
 						updated_arduino_force = updated_arduino_data[adc_column].iloc[:min_length]
-						ylabel = "Residual Force [ADC]"
+						ylabel = "Residual Force (ADC)"
 					else:
 						print(f"ADC data not found for sensor {sensor_num} in test {_TEST_NUM}.")
 						continue  # Skip this test if ADC data is missing
@@ -194,7 +198,7 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				# Plot the smoothed residuals
 				plt.plot(instron_force[:len(residuals_smoothed)], residuals_smoothed, '-', label=f"Test {_TEST_NUM}", linewidth=2)
 			
-			plt.xlabel("Instron Force [N]")
+			plt.xlabel("Calibration Force (N)")
 			plt.ylabel(ylabel)
 			plt.legend(loc="lower left")
 			plt.title(f"Residuals for Polynomial Fit (Order {order}) Across Multiple Tests")
@@ -223,9 +227,9 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time, force, and ADC data
-		instron_time = instron_data["Time [s]"]  # .to_numpy()
+		# instron_time = instron_data["Time [s]"]  # .to_numpy()
 		instron_force = instron_data["Force [N]"]  # .to_numpy()
-		updated_arduino_time = updated_arduino_data["Time [s]"]  # .to_numpy()
+		# updated_arduino_time = updated_arduino_data["Time [s]"]  # .to_numpy()
 		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]  # .to_numpy()
 		
 		# Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
@@ -260,52 +264,60 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			arduino_force_type = "ADC" if SIMPLIFY else f"ADC{sensor_num}"
 			arduino_force = aligned_arduino_data["ADC" if SIMPLIFY else f"ADC{sensor_num}"].iloc[:min_length]
 		else:
-			arduino_force_type = "Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"
-			arduino_force = updated_arduino_force.iloc[:min_length]
+			arduino_force_type = "Force (N)" if SIMPLIFY else f"Force{sensor_num} (N)"
+			arduino_force = -updated_arduino_force.iloc[:min_length]
+		
+		# Find the index where the Instron force first reaches the threshold
+		trim_force_threshold = -0.005
+		truncate_force_threshold = -0.7
+		trim_index = instron_force.ge(trim_force_threshold).idxmin()
+		truncate_index = instron_force.ge(truncate_force_threshold).idxmin()
+		
+		# Truncate all datasets from this index onwards to ensure consistent lengths
+		instron_force = instron_force[trim_index:]
+		arduino_force = arduino_force[trim_index:]
+		instron_force = instron_force[:truncate_index]
+		arduino_force = arduino_force[:truncate_index]
+		
+		# Invert the Instron force
+		instron_force = -instron_force
 		
 		# Second plot: Relationship between Instron force and Arduino ADC values
-		plt.figure(figsize=(10, 6))
-		plt.scatter(instron_force, arduino_force, label=f"Instron Force vs. Arduino {arduino_force_type}", color="purple")
-		plt.xlabel("Instron Force [N]")
-		plt.ylabel(f"Arduino {arduino_force_type} Values")
-		plt.legend()
-		plt.title(
-			f"Relationship Between Instron Force and Arduino {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
-		plt.grid(True)
-		
-		# Invert the x-axis
-		plt.gca().invert_xaxis()
-		
-		if save_graphs:
-			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} adc against N.png", dpi=300)
-		plt.show()
+		# plt.figure(figsize=(10, 6))
+		# plt.scatter(instron_force, arduino_force, label=f"Calibration Force vs. Pressure Sensor Output", color="purple")
+		# plt.xlabel("Calibration Force [N]")
+		# plt.ylabel(f"Pressure Sensor Output [counts]")
+		# plt.legend()
+		# plt.title(
+		# 	f"Relationship Between Calibration Force and Pressure Sensor Count")
+		# plt.grid(True)
+		#
+		# if save_graphs:
+		# 	plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} adc against N.png", dpi=300)
+		# plt.show()
 		
 		# Calculate and plot the best-fit line
-		lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)
+		lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)  # instron_force
 		
 		# Plot the best-fit line over the scatter plot
 		plt.figure(figsize=(10, 6))
-		plt.scatter(instron_force, arduino_force, label="Actual Data", color="purple")
-		plt.plot(instron_force, lin_fit, label="Best-fit line", color="orange")
-		plt.xlabel("Instron Force [N]")
-		plt.ylabel(f"Arduino {arduino_force_type} Values")
+		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data")
+		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
+		plt.xlabel("Calibration Force (N)")
+		plt.ylabel("Raw Pressure Sensor Output")
 		plt.legend()
-		plt.title(
-			f"Best-fit Line Through {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+		# plt.title(f"Best-fit Line Through Calibration Force vs. Pressure Sensor Output")
 		plt.grid(True)
-		
-		# Invert the x-axis
-		plt.gca().invert_xaxis()
 		
 		if save_graphs:
 			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} best-fit line through {arduino_force_type} values.png", dpi=300)
 		plt.show()
 		
 		# Calculate and plot residuals
-		residuals = arduino_force - lin_fit
-		print("Length of residuals:", len(residuals))
-		plt.figure(figsize=(10, 6))
-		plt.scatter(instron_force, residuals, label="Residuals", color="green")
+		# residuals = arduino_force - lin_fit
+		# print("Length of residuals:", len(residuals))
+		# plt.figure(figsize=(10, 6))
+		# plt.scatter(instron_force, residuals, label="Residuals", color="green")
 		
 		# THIS IS REMOVED AS THEY SHOULD ALREADY HAVE BEEN SMOOTHED AT THIS POINT (and this is excessive)
 		# # Calculate a simple moving average of the residuals
@@ -319,22 +331,19 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue", linewidth=2)
 		# plt.axhline(y=0, color='r', linestyle='-')
 		
-		plt.xlabel("Instron Force [N]")
-		plt.ylabel("Residuals")
-		plt.legend()
-		plt.title(
-			f"Smoothed Residuals of {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
-		plt.grid(True)
-		
-		# Invert the x-axis
-		plt.gca().invert_xaxis()
-		
-		if save_graphs:
-			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} averaged noise.png", dpi=300)
-		plt.show()
+		# plt.xlabel("Calibration Force [N]")
+		# plt.ylabel("Residuals")
+		# plt.legend()
+		# plt.title(
+		# 	f"Smoothed Residuals of {arduino_force_type} Values for {SENSOR_SET_DIR}, Sensor {sensor_num}, Test {TEST_NUM}")
+		# plt.grid(True)
+		#
+		# if save_graphs:
+		# 	plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} averaged noise.png", dpi=300)
+		# plt.show()
 		
 		# Fit and plot polynomial models of 1st through 4th order
-		for order in range(1, 5):
+		for order in [1]:  # range(1, 5)
 			# Sleep to avoid HTTPS request limit
 			time.sleep(2)
 			
@@ -354,22 +363,24 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			#          linewidth=2)
 			
 			plt.figure(figsize=(10, 6))
-			plt.plot(instron_force, residuals, '-', label=f"Order {order} residuals",
-			         linewidth=2)
+			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", linewidth=2)
 			
 			if order == 1:
 				# For first-order, you might still want to plot the average line for comparison
 				average_residual = np.mean(residuals)
-				plt.axhline(y=average_residual, color='r', linestyle='-', label="Average Residual")
+				plt.axhline(y=average_residual, color='r', linestyle='-', label="Best-fit line", linewidth=2)  # Average Residual
 			
-			plt.xlabel("Instron Force [N]")
-			plt.ylabel(f"Arduino {arduino_force_type}")
+			plt.xlabel("Calibration Force (N)")
+			plt.ylabel("Sensor Error")
+			
+			# Set scientific notation for the y-axis
+			ax = plt.gca()  # Get current axis
+			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+			
 			plt.legend()
-			plt.title(f"Smoothed Residuals for Polynomial Fit of Order {order} - Sensor {sensor_num}")
+			# plt.title(f"Residuals: Error")
 			plt.grid(True)
-			
-			# Invert the x-axis
-			plt.gca().invert_xaxis()
 			
 			if save_graphs:
 				plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} order {order}.png", dpi=300)
