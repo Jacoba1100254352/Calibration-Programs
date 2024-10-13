@@ -98,12 +98,19 @@ def analyze_and_graph_neural_fit(
 			# overlay_ax.invert_xaxis()
 			
 			# Plot residuals with MATLAB-style aesthetics
-			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Residuals (N) (Test {test_num})", linewidth=2)
-			residuals_ax.set_xlabel("Calibration Force (N)")
+			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num}", linewidth=2) # Residuals (N) (Test {test_num})
+			# residuals_ax.set_xlabel("Calibration Force (N)")
 			residuals_ax.set_ylabel("Residuals (N)")
-			residuals_ax.set_title(f"Residuals with {units}-neuron, {bit_resolution}-bit model")
+			# residuals_ax.set_title(f"Residuals with {units}-neuron, {bit_resolution}-bit model")
 			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
 			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
+			
+			ax = plt.gca()  # Get current axis
+			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+			
+			# Adjust layout to remove white space
+			plt.tight_layout()
 		# residuals_ax.invert_xaxis()
 		
 		# Save and show graphs
@@ -301,7 +308,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		
 		# Plot the best-fit line over the scatter plot
 		plt.figure(figsize=(10, 6))
-		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data")
+		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data", color="black")
 		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
 		plt.xlabel("Calibration Force (N)")
 		plt.ylabel("Raw Pressure Sensor Output")
@@ -363,7 +370,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			#          linewidth=2)
 			
 			plt.figure(figsize=(10, 6))
-			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", linewidth=2)
+			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", color="black", linewidth=2)
 			
 			if order == 1:
 				# For first-order, you might still want to plot the average line for comparison
