@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Updated Figures">
+    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Updating to matlab type plots (only for neural fit for now)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
@@ -115,7 +115,7 @@
       <workItem from="1728339911102" duration="6511000" />
       <workItem from="1728353318436" duration="6615000" />
       <workItem from="1728407302817" duration="5059000" />
-      <workItem from="1728487772577" duration="97751000" />
+      <workItem from="1728487772577" duration="107376000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -437,7 +437,15 @@
       <option name="project" value="LOCAL" />
       <updated>1728863711184</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="Updating to matlab type plots (only for neural fit for now)">
+      <option name="closed" value="true" />
+      <created>1728873354914</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1728873354914</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -452,7 +460,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Testing: Combining options and using scaling" />
     <MESSAGE value="WIP: Issues encountered, continue with this function later" />
     <MESSAGE value="Simplified function, better but with figure error" />
     <MESSAGE value="Plots are working, graphs look good but not nearly as good as polyfit" />
@@ -477,15 +484,16 @@
     <MESSAGE value="Removing mark down files and unit test" />
     <MESSAGE value="Improving plots and labeling" />
     <MESSAGE value="Updated Figures" />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated Figures" />
+    <MESSAGE value="Updating to matlab type plots (only for neural fit for now)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updating to matlab type plots (only for neural fit for now)" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Error_Plots.coverage" NAME="Error_Plots Coverage Results" MODIFIED="1728857621874" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Error_Plots.coverage" NAME="Error_Plots Coverage Results" MODIFIED="1728881187589" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1728355057927" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1728345110709" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1728636017659" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1728872892376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1728878099379" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Aligned_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Aligned Instron and Arduino Data Coverage Results" MODIFIED="1728586072153" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
   </component>
 </project>

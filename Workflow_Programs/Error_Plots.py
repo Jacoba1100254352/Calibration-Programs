@@ -1,6 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import ScalarFormatter
 
+
+# Set general plot appearance
+SIZE_SMALL = 10
+SIZE_DEFAULT = 14
+SIZE_LARGE = 20
+SIZE_XLARGE = 26
+SIZE_XXLARGE = 32
+
+plt.rc("font", family='Helvetica Neue', size=SIZE_DEFAULT, weight="bold")  # Default text sizes
+plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
+plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 # Data for bit resolutions and number of neurons
 bit_resolutions = np.array(["Uncalibrated", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
@@ -27,45 +39,94 @@ accuracy_error_fma = accuracy_fma * full_scale_span_fma  # FMA accuracy in N
 wearable_required_accuracy = 0.048  # In Newtons (0.2 kPa tolerance * 0.00024 m²)
 
 # Create the first plot: RMSE vs Bit Resolution (including "Uncalibrated")
-plt.figure(figsize=(10, 6))
-plt.plot(bit_resolutions, rmse_bit_resolution, marker='o', color='black', label=r'$\epsilon_{\text{rms}}$ vs Bit Resolution', linewidth=2)
+residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
+
+# Plot RMSE vs Bit Resolution
+residuals_ax.plot(bit_resolutions, rmse_bit_resolution, marker='o', color='black',
+                  label=r'$\epsilon_{\text{rms}}$ vs Bit Resolution', linewidth=2)
 
 # Add horizontal lines for sensor accuracy and estimated wearable accuracy
-plt.axhline(y=accuracy_error_fma, color='m', linestyle='--', label=f'FMA Sensor Accuracy (±{accuracy_fma * 100:.0f}% FSS, ±{accuracy_error_fma:.2f} N)')
-plt.axhline(y=wearable_required_accuracy, color='b', linestyle='--', label=f'Wearable Required Accuracy (±0.2 kPa, ±{wearable_required_accuracy:.4f} N)')
+residuals_ax.axhline(y=accuracy_error_fma, color='r', linestyle='--',
+                     label=f'FMA Sensor Accuracy (±{accuracy_fma * 100:.0f}% FSS, ±{accuracy_error_fma:.2f} N)', linewidth=2)
+residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
+                     label=f'Wearable Required Accuracy (±0.2 kPa, ±{wearable_required_accuracy:.4f} N)', linewidth=2)
 
-# Add labels and title
-# plt.title('RMS Error Across Different Bit Resolutions Compared to Sensor Specifications (Force Units)', fontsize=14)
-plt.xlabel('Bit Resolution', fontsize=12)
-plt.ylabel(r'$\epsilon_{\text{rms}}$ (Force in N)', fontsize=12)
+# Set axis labels
+# residuals_ax.set_xlabel('Bit Resolution', fontsize=12)
+residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXLARGE, labelpad=0)
+residuals_ax.set_yscale('log')  # Log scale for better visibility
+residuals_ax.grid(True)
+
+# Set bold and large font for tick labels
+residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+                         labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True)
+residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+                         labelcolor='black', top=True, bottom=True, left=True, right=True)
+
+# Apply bold and Helvetica to tick labels using setp()
+plt.setp(residuals_ax.get_xticklabels(), fontsize=18)
+plt.setp(residuals_ax.get_yticklabels(), fontsize=18)
+
+# Set grid lines and add minor ticks
+residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
+
+# Formatter for scientific notation on Y axis
+# residuals_ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+# residuals_ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 plt.yscale('log')  # Log scale for better visibility
-plt.grid(True)
 
 # Add legend
-plt.legend()
+residuals_ax.legend()
+
+# Adjust layout
+plt.tight_layout()
 
 # Show plot
-plt.tight_layout()
 plt.show()
 
+
 # Create the second plot: RMSE vs Number of Neurons
-plt.figure(figsize=(10, 6))
-plt.plot(neuron_counts, rmse_neuron_count, marker='o', color='black', label=r'$\epsilon_{\text{rms}}$ vs Neuron Count', linewidth=2)
+residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
+
+# Plot RMSE vs Neuron Count
+residuals_ax.plot(neuron_counts, rmse_neuron_count, marker='o', color='black',
+                  label=r'$\epsilon_{\text{rms}}$ vs Neuron Count', linewidth=2)
 
 # Add horizontal lines for sensor accuracy and estimated wearable accuracy
-plt.axhline(y=accuracy_error_fma, color='m', linestyle='--', label=f'FMA Sensor Accuracy (±{accuracy_fma * 100:.0f}% FSS, ±{accuracy_error_fma:.2f} N)')
-plt.axhline(y=wearable_required_accuracy, color='b', linestyle='--', label=f'Wearable Required Accuracy (±0.2 kPa, ±{wearable_required_accuracy:.4f} N)')
+residuals_ax.axhline(y=accuracy_error_fma, color='r', linestyle='--',
+                     label=f'FMA Sensor Accuracy (±{accuracy_fma * 100:.0f}% FSS, ±{accuracy_error_fma:.2f} N)', linewidth=2)
+residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
+                     label=f'Wearable Required Accuracy (±0.2 kPa, ±{wearable_required_accuracy:.4f} N)', linewidth=2)
 
-# Add labels and title
-# plt.title('RMSE Across Different Number of Neurons', fontsize=14)
-plt.xlabel('Number of Neurons', fontsize=12)
-plt.ylabel(r'$\epsilon_{\text{rms}}$ (Force in N)', fontsize=12)
+# Set axis labels
+# residuals_ax.set_xlabel('Number of Neurons', fontsize=12)
+residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXLARGE, labelpad=0)
+residuals_ax.set_yscale('log')  # Log scale for better visibility
+residuals_ax.grid(True)
+
+# Set bold and large font for tick labels
+residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+                         labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True)
+residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+                         labelcolor='black', top=True, bottom=True, left=True, right=True)
+
+# Apply bold and Helvetica to tick labels using setp()
+plt.setp(residuals_ax.get_xticklabels(), fontsize=18)
+plt.setp(residuals_ax.get_yticklabels(), fontsize=18)
+
+# Set grid lines and add minor ticks
+residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
+
+# Formatter for scientific notation on Y axis
+# residuals_ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+# residuals_ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 plt.yscale('log')  # Log scale for better visibility
-plt.grid(True)
 
 # Add legend
-plt.legend()
+residuals_ax.legend()
+
+# Adjust layout
+plt.tight_layout()
 
 # Show plot
-plt.tight_layout()
 plt.show()

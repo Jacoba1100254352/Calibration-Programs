@@ -11,7 +11,7 @@ from Neural_Fit import *
 seed_value = 42
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, AutoMinorLocator
+from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import mean_squared_error
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -33,13 +33,18 @@ def analyze_and_graph_neural_fit(
 	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5,
 	l2_reg=0.01, learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True,
 	show_graphs=True, bit_resolution=12, enable_hyperparameter_tuning=False, mapping='N_vs_N',
-	hyperparams_dict=None
+	hyperparams_dict=None, save_bit=False
 ):
 	plt.close('all')
 	print(f"Neurons: {units}, bit resolution: {bit_resolution}")
 	
+	if save_bit:
+		file_name = f"residuals_{bit_resolution}" if activation != "relu" else f"residuals_{bit_resolution}_relu"
+	else:
+		file_name = f"residuals_{units}_neurons" if activation != "relu" else f"residuals_{units}_neurons_relu"
+	
 	# Initialize the PDF to save the graphs
-	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
+	with PdfPages(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf") as pdf:
 		
 		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 		
@@ -64,7 +69,7 @@ def analyze_and_graph_neural_fit(
 			
 			# Set axis limits and grid
 			residuals_ax.set_xlim([0, 1])
-			residuals_ax.set_ylabel("Residuals (N)", fontsize=SIZE_XLARGE, labelpad=-5)
+			residuals_ax.set_ylabel("$\epsilon$ (N)", fontsize=SIZE_XXLARGE, labelpad=-5)
 			# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
 			
 			# Bold and increase size of the tick labels
@@ -89,7 +94,7 @@ def analyze_and_graph_neural_fit(
 			# GRID LINES
 			# Set grid with minor ticks and tick-like lines
 			residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
-
+			
 			# Add minor tick marks inside the graph
 			# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
 			# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
@@ -294,14 +299,46 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)  # instron_force
 		
 		# Plot the best-fit line over the scatter plot
-		plt.figure(figsize=(10, 6))
+		raw_fig, raw_ax = plt.subplots(figsize=(10, 6))
 		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data", color="black")
 		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
-		# plt.xlabel("Calibration Force (N)")
-		plt.ylabel("Raw Pressure Sensor Output")
-		plt.legend()
-		# plt.title(f"Best-fit Line Through Calibration Force vs. Pressure Sensor Output")
-		plt.grid(True)
+		
+		# Set axis limits and grid
+		# raw_ax.set_xlim([0, 1])
+		# raw_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
+		raw_ax.set_ylabel("Raw Pressure Sensor Output", fontsize=SIZE_XLARGE, labelpad=0)
+		
+		# Bold and increase size of the tick labels
+		raw_ax.tick_params(
+			axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+		)  # Major ticks on all sides
+		raw_ax.tick_params(
+			axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+			labelcolor='black', top=True, bottom=True, left=True, right=True
+		)  # Minor ticks on all sides
+		
+		# Apply bold and Helvetica to tick labels using setp()
+		plt.setp(raw_ax.get_xticklabels(), fontsize=18)  # X ticks
+		plt.setp(raw_ax.get_yticklabels(), fontsize=18)  # Y ticks
+		
+		# SMALL TICKS
+		# Add minor ticks
+		# raw_ax.xaxis.set_minor_locator(AutoMinorLocator())
+		# raw_ax.yaxis.set_minor_locator(AutoMinorLocator())
+		
+		# GRID LINES
+		# Set grid with minor ticks and tick-like lines
+		raw_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
+		
+		# Add minor tick marks inside the graph
+		# raw_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
+		# raw_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
+		
+		# Formatter for scientific notation
+		ax = plt.gca()
+		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 		
 		plt.tight_layout()
 		
@@ -358,7 +395,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			# plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Order {order} smoothed residuals",
 			#          linewidth=2)
 			
-			plt.figure(figsize=(10, 6))
+			residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", color="black", linewidth=2)
 			
 			if order == 1:
@@ -367,10 +404,42 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 				plt.axhline(y=average_residual, color='r', linestyle='-', label="Best-fit line", linewidth=2)  # Average Residual
 			
 			# plt.xlabel("Calibration Force (N)")
-			plt.ylabel("Sensor Error")
+			# plt.ylabel("Sensor Error")
 			
-			# Set scientific notation for the y-axis
-			ax = plt.gca()  # Get current axis
+			# Set axis limits and grid
+			# residuals_ax.set_xlim([0, 1])
+			# residuals_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
+			residuals_ax.set_ylabel("Sensor Error", fontsize=SIZE_XLARGE, labelpad=-5)
+			
+			# Bold and increase size of the tick labels
+			residuals_ax.tick_params(
+				axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+				labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+			)  # Major ticks on all sides
+			residuals_ax.tick_params(
+				axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+				labelcolor='black', top=True, bottom=True, left=True, right=True
+			)  # Minor ticks on all sides
+			
+			# Apply bold and Helvetica to tick labels using setp()
+			plt.setp(residuals_ax.get_xticklabels(), fontsize=18)  # X ticks
+			plt.setp(residuals_ax.get_yticklabels(), fontsize=18)  # Y ticks
+			
+			# SMALL TICKS
+			# Add minor ticks
+			# residuals_ax.xaxis.set_minor_locator(AutoMinorLocator())
+			# residuals_ax.yaxis.set_minor_locator(AutoMinorLocator())
+			
+			# GRID LINES
+			# Set grid with minor ticks and tick-like lines
+			residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
+			
+			# Add minor tick marks inside the graph
+			# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
+			# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
+			
+			# Formatter for scientific notation
+			ax = plt.gca()
 			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
 			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 			
