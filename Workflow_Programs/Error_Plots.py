@@ -81,9 +81,11 @@ residuals_ax.legend()
 # Adjust layout
 plt.tight_layout()
 
+file_name = "rms_bit_relu"
+plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
+
 # Show plot
 plt.show()
-
 
 # Create the second plot: RMSE vs Number of Neurons
 residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
@@ -127,6 +129,9 @@ residuals_ax.legend()
 
 # Adjust layout
 plt.tight_layout()
+
+file_name = "rms_neuron_relu"
+plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
 
 # Show plot
 plt.show()

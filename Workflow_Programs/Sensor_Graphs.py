@@ -49,8 +49,6 @@ def analyze_and_graph_neural_fit(
 		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 		
 		for test_num in test_range:
-			if test_num == 11:
-				continue
 			
 			# Load and prepare data (placeholder function call)
 			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
@@ -65,7 +63,7 @@ def analyze_and_graph_neural_fit(
 			print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
 			
 			# Plot residuals
-			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num}", linewidth=3)
+			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num-8}", linewidth=3)
 			
 			# Set axis limits and grid
 			residuals_ax.set_xlim([0, 1])
@@ -105,6 +103,9 @@ def analyze_and_graph_neural_fit(
 			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 			
 			plt.tight_layout()
+			
+			# Add legend
+			residuals_ax.legend(loc="upper right")
 		
 		# Save graphs
 		if save_graphs:
@@ -306,7 +307,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# Set axis limits and grid
 		# raw_ax.set_xlim([0, 1])
 		# raw_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
-		raw_ax.set_ylabel("Raw Pressure Sensor Output", fontsize=SIZE_XLARGE, labelpad=0)
+		raw_ax.set_ylabel("Raw Pressure Sensor Output", fontsize=SIZE_XXLARGE, labelpad=0)
 		
 		# Bold and increase size of the tick labels
 		raw_ax.tick_params(
@@ -342,8 +343,11 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		
 		plt.tight_layout()
 		
+		plt.legend()
+		
 		if save_graphs:
-			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} best-fit line through {arduino_force_type} values.png", dpi=300)
+			file_name = "best_fit"
+			plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
 		plt.show()
 		
 		# Calculate and plot residuals
@@ -409,7 +413,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			# Set axis limits and grid
 			# residuals_ax.set_xlim([0, 1])
 			# residuals_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
-			residuals_ax.set_ylabel("Sensor Error", fontsize=SIZE_XLARGE, labelpad=-5)
+			residuals_ax.set_ylabel(r"$\epsilon$", fontsize=SIZE_XXLARGE, labelpad=-5)  # Sensor Error
 			
 			# Bold and increase size of the tick labels
 			residuals_ax.tick_params(
@@ -450,5 +454,6 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			plt.tight_layout()
 			
 			if save_graphs:
-				plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} order {order}.png", dpi=300)
+				file_name = "first_order_removed"
+				plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
 			plt.show()
