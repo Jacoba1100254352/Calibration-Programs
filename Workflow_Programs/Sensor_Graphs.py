@@ -1,8 +1,6 @@
 # from matplotlib.backends.backend_pdf import PdfPages
 import time
 
-from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
@@ -10,118 +8,107 @@ from sklearn.metrics import mean_absolute_error
 from Neural_Fit import *
 
 
-# Set MATLAB-like appearance
-# Define font sizes
+seed_value = 42
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter, AutoMinorLocator
+from sklearn.metrics import mean_squared_error
+from matplotlib.backends.backend_pdf import PdfPages
+
+
+# Set general plot appearance
 SIZE_SMALL = 10
 SIZE_DEFAULT = 14
-SIZE_LARGE = 16
-# plt.rc("font", family="Roboto")  # controls default font
-plt.rc("font", weight="normal")  # controls default font
-plt.rc("font", size=SIZE_DEFAULT)  # controls default text sizes
-plt.rc("axes", titlesize=SIZE_LARGE)  # fontsize of the axes title
-plt.rc("axes", labelsize=20)  # fontsize of the x and y labels
-plt.rc("xtick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
-plt.rc("ytick", labelsize=SIZE_DEFAULT)  # fontsize of the tick labels
+SIZE_LARGE = 20
+SIZE_XLARGE = 26
+SIZE_XXLARGE = 32
 
-seed_value = 42  # Or any other integer
+plt.rc("font", family='Helvetica Neue', size=SIZE_DEFAULT, weight="bold")  # Default text sizes
+plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
+plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 
+# Analyze and plot function
 def analyze_and_graph_neural_fit(
-	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5, l2_reg=0.01,
-	learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True, show_graphs=True, bit_resolution=12,
-	enable_hyperparameter_tuning=False, mapping='N_vs_N', hyperparams_dict=None
+	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5,
+	l2_reg=0.01, learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True,
+	show_graphs=True, bit_resolution=12, enable_hyperparameter_tuning=False, mapping='N_vs_N',
+	hyperparams_dict=None
 ):
 	plt.close('all')
 	print(f"Neurons: {units}, bit resolution: {bit_resolution}")
 	
 	# Initialize the PDF to save the graphs
 	with PdfPages(f"/Users/jacobanderson/Downloads/Neural_Network_Fit_Sensor_Set_{sensor_num}.pdf") as pdf:
-		# Set up figures and axes for overlay and residuals
-		# overlay_fig, overlay_ax = plt.subplots(figsize=(10, 6))
+		
 		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 		
 		for test_num in test_range:
 			if test_num == 11:
 				continue
-			# Load and prepare data
-			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(
-				sensor_num, test_num, bit_resolution, mapping
-			)
 			
-			if enable_hyperparameter_tuning:
-				# Train model with hyperparameter tuning
-				model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(
-					inputs, targets, bit_resolution, test_num, hyperparams_dict
-				)
-			else:
-				# Train model without hyperparameter tuning
-				model, input_scaler, output_scaler = train_model(
-					inputs, targets, units, layers, activation, dropout_rate, l2_reg,
-					learning_rate, epochs, batch_size, bit_resolution
-				)
+			# Load and prepare data (placeholder function call)
+			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
 			
-			# Evaluate model and calculate residuals
+			# Train model and evaluate (placeholder function call)
+			model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
 			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
 			
-			# Calculate MSE and RMSE
+			# Calculate RMSE
 			mse_nn = mean_squared_error(targets.flatten(), outputs.flatten())
-			rmse_nn = np.sqrt(mse_nn)  # Calculate RMSE from MSE
-			
-			# Print RMSE and MAE for each test
+			rmse_nn = np.sqrt(mse_nn)
 			print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
 			
-			# Set x-axis limits to 0-1
-			# overlay_ax.set_xlim([0, 1])
+			# Plot residuals
+			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num}", linewidth=3)
+			
+			# Set axis limits and grid
 			residuals_ax.set_xlim([0, 1])
+			residuals_ax.set_ylabel("Residuals (N)", fontsize=SIZE_XLARGE, labelpad=-5)
+			# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
 			
-			# Find the index where the Instron force first reaches the threshold
-			force_threshold = 0.01
-			truncate_index = np.argmax(targets >= force_threshold)  # NumPy equivalent for Pandas .ge()
+			# Bold and increase size of the tick labels
+			residuals_ax.tick_params(
+				axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+				labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+			)  # Major ticks on all sides
+			residuals_ax.tick_params(
+				axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+				labelcolor='black', top=True, bottom=True, left=True, right=True
+			)  # Minor ticks on all sides
 			
-			# Truncate all datasets from this index onwards to ensure consistent lengths
-			# targets = targets[truncate_index:]
-			# outputs = outputs[truncate_index:]
-			residuals = residuals[truncate_index:]
-			instron_force = instron_force[truncate_index:]  # Ensure instron_force is also truncated
+			# Apply bold and Helvetica to tick labels using setp()
+			plt.setp(residuals_ax.get_xticklabels(), fontsize=18)  # X ticks
+			plt.setp(residuals_ax.get_yticklabels(), fontsize=18)  # Y ticks
 			
-			# First Graph: Plot calibrated sensor N vs Instron N
-			# Output = Calibrated Sensor N, Target = Instron N
-			# overlay_ax.plot(targets.flatten(), outputs.flatten(), label=f"Calibrated Sensor [N] (Test {test_num})", linestyle='--', linewidth=2)
-			# overlay_ax.plot(targets.flatten(), targets.flatten(), label=f"Instron [N] (Test {test_num})", linewidth=2)
-			#
-			# # Customize the graph appearance
-			# overlay_ax.set_xlabel("Calibration Force [N]")
-			# overlay_ax.set_ylabel("Calibrated Sensor Force [N]")
-			# overlay_ax.set_title(f"Neural Fit: Sensor vs. Calibration Force ({bit_resolution}-bit)")  # Sensor-Calibration Force Relationship with Neural Fit (12-bit)
-			# overlay_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
-			# overlay_ax.grid(True, which='both', linestyle='--', linewidth=0.75)  # Add grid lines
-			# overlay_ax.invert_xaxis()
+			# SMALL TICKS
+			# Add minor ticks
+			# residuals_ax.xaxis.set_minor_locator(AutoMinorLocator())
+			# residuals_ax.yaxis.set_minor_locator(AutoMinorLocator())
 			
-			# Plot residuals with MATLAB-style aesthetics
-			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num}", linewidth=2) # Residuals (N) (Test {test_num})
-			# residuals_ax.set_xlabel("Calibration Force (N)")
-			residuals_ax.set_ylabel("Residuals (N)")
-			# residuals_ax.set_title(f"Residuals with {units}-neuron, {bit_resolution}-bit model")
-			residuals_ax.legend(loc="lower left", fontsize=SIZE_SMALL, markerscale=0.8, labelspacing=0.3)
-			residuals_ax.grid(True, which='both', linestyle='--', linewidth=0.75)
+			# GRID LINES
+			# Set grid with minor ticks and tick-like lines
+			residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
+
+			# Add minor tick marks inside the graph
+			# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
+			# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
 			
-			ax = plt.gca()  # Get current axis
+			# Formatter for scientific notation
+			ax = plt.gca()
 			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
 			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 			
-			# Adjust layout to remove white space
 			plt.tight_layout()
-		# residuals_ax.invert_xaxis()
 		
-		# Save and show graphs
+		# Save graphs
 		if save_graphs:
-			# pdf.savefig(overlay_fig)
 			pdf.savefig(residuals_fig)
 		
+		# Show graphs
 		if show_graphs:
 			plt.show()
 		
-		# plt.close(overlay_fig)
 		plt.close(residuals_fig)
 
 
@@ -310,11 +297,13 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		plt.figure(figsize=(10, 6))
 		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data", color="black")
 		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
-		plt.xlabel("Calibration Force (N)")
+		# plt.xlabel("Calibration Force (N)")
 		plt.ylabel("Raw Pressure Sensor Output")
 		plt.legend()
 		# plt.title(f"Best-fit Line Through Calibration Force vs. Pressure Sensor Output")
 		plt.grid(True)
+		
+		plt.tight_layout()
 		
 		if save_graphs:
 			plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} best-fit line through {arduino_force_type} values.png", dpi=300)
@@ -377,7 +366,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 				average_residual = np.mean(residuals)
 				plt.axhline(y=average_residual, color='r', linestyle='-', label="Best-fit line", linewidth=2)  # Average Residual
 			
-			plt.xlabel("Calibration Force (N)")
+			# plt.xlabel("Calibration Force (N)")
 			plt.ylabel("Sensor Error")
 			
 			# Set scientific notation for the y-axis
@@ -388,6 +377,8 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			plt.legend()
 			# plt.title(f"Residuals: Error")
 			plt.grid(True)
+			
+			plt.tight_layout()
 			
 			if save_graphs:
 				plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} order {order}.png", dpi=300)

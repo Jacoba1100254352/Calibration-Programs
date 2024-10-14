@@ -61,20 +61,6 @@ for units in [8, 32, 256]:
 		dropout_rate=0.1, layers=1, units=units, batch_size=64, bit_resolution=12
 	)
 
-for bit in [6, 8, 12]:
-	analyze_and_graph_neural_fit(
-		test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-		activation='tanh', l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N',
-		dropout_rate=0.1, layers=1, units=160, batch_size=64, bit_resolution=bit
-	)
-
-for units in [8, 32, 256]:
-	analyze_and_graph_neural_fit(
-		test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-		activation='tanh', l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N',
-		dropout_rate=0.1, layers=1, units=units, batch_size=64, bit_resolution=12
-	)
-
 # analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
 # 	test_range=[TEST_NUM], sensor_num=1, save_graphs=SAVE_GRAPHS,
 # 	smoothing_method='boxcar', bit_resolution=12, mapping='N_vs_N'

@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 # Data for bit resolutions and number of neurons
 bit_resolutions = np.array(["Uncalibrated", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
 neuron_counts = np.array(["Uncalibrated", 1, 2, 4, 6, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
 
 # Example RMSE data (replace these with your actual computed RMSE values)
-rmse_bit_resolution = np.array([1.184221, 0.160526, 0.054192, 0.014177, 0.003746, 0.001705, 0.001739])  # tanh: RMSE for different bit resolutions, including uncalibrated
-rmse_neuron_count = np.array([1.184221, 0.035187, 0.021183, 0.013987, 0.010988, 0.009300, 0.006065, 0.002957, 0.003753, 0.002102])  # tanh: RMSE for different neuron counts
+rmse_bit_resolution = np.array([1.184221, 0.160526, 0.054192, 0.014177, 0.003746, 0.001705,
+                                0.001739])  # tanh: RMSE for different bit resolutions, including uncalibrated
+rmse_neuron_count = np.array([1.184221, 0.035187, 0.021183, 0.013987, 0.010988, 0.009300, 0.006065, 0.002957, 0.003753,
+                              0.002102])  # tanh: RMSE for different neuron counts
 
 # rmse_bit_resolution = np.array([1.184221, 0.162081, 0.054298, 0.014876, 0.005299, 0.005331, 0.005084])  # relu: RMSE for different bit resolutions, including uncalibrated
 # rmse_neuron_count = np.array([1.184221, 0.280838, 0.280838, 0.075722, 0.013051, 0.015576, 0.005593, 0.004132, 0.005247, 0.003716])  # relu: RMSE for different neuron counts
