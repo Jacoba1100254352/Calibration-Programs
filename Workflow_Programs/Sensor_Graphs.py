@@ -22,6 +22,7 @@ SIZE_DEFAULT = 14
 SIZE_LARGE = 20
 SIZE_XLARGE = 26
 SIZE_XXLARGE = 32
+SIZE_XXXLARGE = 40
 
 plt.rc("font", family='Helvetica Neue', size=SIZE_DEFAULT, weight="bold")  # Default text sizes
 plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
@@ -43,79 +44,96 @@ def analyze_and_graph_neural_fit(
 	else:
 		file_name = f"residuals_{units}_neurons" if activation != "relu" else f"residuals_{units}_neurons_relu"
 	
-	# Initialize the PDF to save the graphs
-	with PdfPages(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf") as pdf:
+	residuals_fig, residuals_ax = plt.subplots(figsize=(10, 5))
+	
+	for test_num in test_range:
 		
-		residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
+		# Load and prepare data (placeholder function call)
+		inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
 		
-		for test_num in test_range:
-			
-			# Load and prepare data (placeholder function call)
-			inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
-			
-			# Train model and evaluate (placeholder function call)
-			model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
-			outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
-			
-			# Calculate RMSE
-			mse_nn = mean_squared_error(targets.flatten(), outputs.flatten())
-			rmse_nn = np.sqrt(mse_nn)
-			print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
-			
-			# Plot residuals
-			residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num-8}", linewidth=3)
-			
-			# Set axis limits and grid
-			residuals_ax.set_xlim([0, 1])
-			residuals_ax.set_ylabel("$\epsilon$ (N)", fontsize=SIZE_XXLARGE, labelpad=-5)
-			# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
-			
-			# Bold and increase size of the tick labels
-			residuals_ax.tick_params(
-				axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
-				labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
-			)  # Major ticks on all sides
-			residuals_ax.tick_params(
-				axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
-				labelcolor='black', top=True, bottom=True, left=True, right=True
-			)  # Minor ticks on all sides
-			
-			# Apply bold and Helvetica to tick labels using setp()
-			plt.setp(residuals_ax.get_xticklabels(), fontsize=18)  # X ticks
-			plt.setp(residuals_ax.get_yticklabels(), fontsize=18)  # Y ticks
-			
-			# SMALL TICKS
-			# Add minor ticks
-			# residuals_ax.xaxis.set_minor_locator(AutoMinorLocator())
-			# residuals_ax.yaxis.set_minor_locator(AutoMinorLocator())
-			
-			# GRID LINES
-			# Set grid with minor ticks and tick-like lines
-			residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
-			
-			# Add minor tick marks inside the graph
-			# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
-			# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
-			
-			# Formatter for scientific notation
-			ax = plt.gca()
-			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
-			
-			plt.tight_layout()
-			
-			# Add legend
-			residuals_ax.legend(loc="upper right")
+		# Train model and evaluate (placeholder function call)
+		model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
+		outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
 		
-		# Save graphs
-		if save_graphs:
-			pdf.savefig(residuals_fig)
+		# Calculate RMSE
+		mse_nn = mean_squared_error(targets.flatten(), outputs.flatten())
+		rmse_nn = np.sqrt(mse_nn)
+		print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
 		
-		# Show graphs
-		if show_graphs:
-			plt.show()
+		# Plot residuals
+		residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num-8}", linewidth=3)
 		
-		plt.close(residuals_fig)
+		# Set axis limits and grid
+		residuals_ax.set_xlim([0, 1])
+		residuals_ax.set_ylim([-0.04, 0.06])
+		residuals_ax.set_ylabel("$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
+		# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
+		
+		# Bold and increase size of the tick labels
+		residuals_ax.tick_params(
+			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
+			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+		)  # Major ticks on all sides
+		residuals_ax.tick_params(
+			axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
+			labelcolor='black', top=True, bottom=True, left=True, right=True
+		)  # Minor ticks on all sides
+		
+		# Apply bold and Helvetica to tick labels using setp() # (Numbers used)
+		plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)  # X ticks
+		plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)  # Y ticks
+		
+		# SMALL TICKS
+		# Add minor ticks
+		# residuals_ax.xaxis.set_minor_locator(AutoMinorLocator())
+		# residuals_ax.yaxis.set_minor_locator(AutoMinorLocator())
+		
+		# GRID LINES
+		# Set grid with minor ticks and tick-like lines
+		residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
+		
+		# Add minor tick marks inside the graph
+		# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
+		# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
+		
+		# Formatter for scientific notation
+		ax = plt.gca()
+		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+		
+		# Set larger font size for the scientific notation
+		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
+		
+		plt.tight_layout()
+		
+		# Add legend
+		# residuals_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
+		residuals_ax.legend(
+			loc="upper right",
+			# fontsize=SIZE_DEFAULT,
+			prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
+			frameon=True,  # Enable the frame (box around the legend)
+			edgecolor='black',  # Set the outline color
+			framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+			fancybox=False,  # Disable rounded corners
+			shadow=False,  # No shadow
+			facecolor='white',  # Background color of the legend box
+			borderpad=0.5  # Padding inside the legend box
+		)
+		
+		# Set the thickness of the legend box outline (bold)
+		legend = residuals_ax.get_legend()
+		legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
+	
+	# Save graphs
+	if save_graphs:
+		plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
+	
+	# Show graphs
+	if show_graphs:
+		plt.show()
+	
+	plt.close(residuals_fig)
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
@@ -236,26 +254,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
 		
 		# Calculate force difference for export if needed
-		difference = instron_force - updated_arduino_force
-		
-		# # Create dictionary for .mat export
-		# data_dict = {
-		# 	'instron_time': instron_time,
-		# 	'instron_force': instron_force,
-		# 	'updated_arduino_time': updated_arduino_time,
-		# 	'updated_arduino_force': updated_arduino_force,
-		# 	'difference': difference
-		# }
-		#
-		# # Create filename for the .mat file (relevant to the sensor data)
-		# file_name = f"/Users/jacobanderson/Downloads/Test_{TEST_NUM}_Sensor_{sensor_num}_calibrated_forces.mat"
-		#
-		# # Save the data to a .mat file
-		# savemat(file_name, data_dict)
-		#
-		# print(f"Data for Sensor {sensor_num} saved to {file_name}")
-		#
-		# exit()
+		# difference = instron_force - updated_arduino_force
 		
 		# Ensure arrays are of equal length for accurate comparison
 		min_length = min(len(instron_data), len(updated_arduino_data))
@@ -305,23 +304,23 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
 		
 		# Set axis limits and grid
-		# raw_ax.set_xlim([0, 1])
+		raw_ax.set_xlim([0, 0.7])
 		# raw_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
 		raw_ax.set_ylabel("Raw Pressure Sensor Output", fontsize=SIZE_XXLARGE, labelpad=0)
 		
 		# Bold and increase size of the tick labels
 		raw_ax.tick_params(
-			axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
 			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
 		)  # Major ticks on all sides
 		raw_ax.tick_params(
-			axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+			axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
 			labelcolor='black', top=True, bottom=True, left=True, right=True
 		)  # Minor ticks on all sides
 		
-		# Apply bold and Helvetica to tick labels using setp()
-		plt.setp(raw_ax.get_xticklabels(), fontsize=18)  # X ticks
-		plt.setp(raw_ax.get_yticklabels(), fontsize=18)  # Y ticks
+		# Apply bold and Helvetica to tick labels using setp() # (Numbers used)
+		plt.setp(raw_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)  # X ticks
+		plt.setp(raw_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)  # Y ticks
 		
 		# SMALL TICKS
 		# Add minor ticks
@@ -341,9 +340,28 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
 		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 		
+		# Set larger font size for the scientific notation
+		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
+		
 		plt.tight_layout()
 		
-		plt.legend()
+		# plt.legend()
+		raw_ax.legend(
+			# loc="upper right",
+			# fontsize=SIZE_DEFAULT,
+			prop={'family': 'Helvetica Neue', 'size': SIZE_LARGE},  # Set font to Helvetica
+			frameon=True,  # Enable the frame (box around the legend)
+			edgecolor='black',  # Set the outline color
+			framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+			fancybox=False,  # Disable rounded corners
+			shadow=False,  # No shadow
+			facecolor='white',  # Background color of the legend box
+			borderpad=0.5  # Padding inside the legend box
+		)
+		
+		# Set the thickness of the legend box outline (bold)
+		legend = raw_ax.get_legend()
+		legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
 		
 		if save_graphs:
 			file_name = "best_fit"
@@ -355,18 +373,6 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# print("Length of residuals:", len(residuals))
 		# plt.figure(figsize=(10, 6))
 		# plt.scatter(instron_force, residuals, label="Residuals", color="green")
-		
-		# THIS IS REMOVED AS THEY SHOULD ALREADY HAVE BEEN SMOOTHED AT THIS POINT (and this is excessive)
-		# # Calculate a simple moving average of the residuals
-		# window_size = 1000  # Choose a window size that makes sense for your data
-		# residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-		#
-		# # To plot the smoothed residuals, we need to adjust the x-axis (instron_force) due to the convolution operation
-		# # This adjustment depends on the 'mode' used in np.convolve. With 'valid', the length of the output is N - K + 1
-		# instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis
-		#
-		# plt.plot(instron_force_adjusted, residuals_smoothed, label="Smoothed Residuals", color="blue", linewidth=2)
-		# plt.axhline(y=0, color='r', linestyle='-')
 		
 		# plt.xlabel("Calibration Force [N]")
 		# plt.ylabel("Residuals")
@@ -390,15 +396,6 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			predicted_adc_force = polynomial(instron_force)
 			residuals = arduino_force - predicted_adc_force
 			
-			# THIS IS REMOVED AS THEY SHOULD ALREADY HAVE BEEN SMOOTHED AT THIS POINT (and this is excessive)
-			# # Smooth the residuals
-			# residuals_smoothed = np.convolve(residuals, np.ones(window_size) / window_size, mode='valid')
-			# instron_force_adjusted = instron_force[(window_size - 1):]  # Adjusting the x-axis for smoothed residuals
-			#
-			# plt.figure(figsize=(10, 6))
-			# plt.plot(instron_force_adjusted, residuals_smoothed, '-', label=f"Order {order} smoothed residuals",
-			#          linewidth=2)
-			
 			residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", color="black", linewidth=2)
 			
@@ -411,23 +408,23 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			# plt.ylabel("Sensor Error")
 			
 			# Set axis limits and grid
-			# residuals_ax.set_xlim([0, 1])
+			residuals_ax.set_xlim([0, 0.7])
 			# residuals_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
-			residuals_ax.set_ylabel(r"$\epsilon$", fontsize=SIZE_XXLARGE, labelpad=-5)  # Sensor Error
+			residuals_ax.set_ylabel("Sensor Error", fontsize=SIZE_XXLARGE, labelpad=-5)  # Sensor Error # $\epsilon$
 			
 			# Bold and increase size of the tick labels
 			residuals_ax.tick_params(
-				axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+				axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
 				labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
 			)  # Major ticks on all sides
 			residuals_ax.tick_params(
-				axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+				axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
 				labelcolor='black', top=True, bottom=True, left=True, right=True
 			)  # Minor ticks on all sides
 			
 			# Apply bold and Helvetica to tick labels using setp()
-			plt.setp(residuals_ax.get_xticklabels(), fontsize=18)  # X ticks
-			plt.setp(residuals_ax.get_yticklabels(), fontsize=18)  # Y ticks
+			plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)  # X ticks
+			plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)  # Y ticks
 			
 			# SMALL TICKS
 			# Add minor ticks
@@ -447,7 +444,27 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
 			ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 			
-			plt.legend()
+			# Set larger font size for the scientific notation
+			ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
+			
+			# plt.legend()
+			residuals_ax.legend(
+				# loc="upper right",
+				# fontsize=SIZE_DEFAULT,
+				prop={'family': 'Helvetica Neue', 'size': SIZE_LARGE},  # Set font to Helvetica
+				frameon=True,  # Enable the frame (box around the legend)
+				edgecolor='black',  # Set the outline color
+				framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+				fancybox=False,  # Disable rounded corners
+				shadow=False,  # No shadow
+				facecolor='white',  # Background color of the legend box
+				borderpad=0.5  # Padding inside the legend box
+			)
+			
+			# Set the thickness of the legend box outline (bold)
+			legend = residuals_ax.get_legend()
+			legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
+			
 			# plt.title(f"Residuals: Error")
 			plt.grid(True)
 			

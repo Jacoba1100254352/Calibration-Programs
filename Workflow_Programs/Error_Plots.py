@@ -9,14 +9,15 @@ SIZE_DEFAULT = 14
 SIZE_LARGE = 20
 SIZE_XLARGE = 26
 SIZE_XXLARGE = 32
+SIZE_XXXLARGE = 40
 
 plt.rc("font", family='Helvetica Neue', size=SIZE_DEFAULT, weight="bold")  # Default text sizes
 plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
 plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 # Data for bit resolutions and number of neurons
-bit_resolutions = np.array(["Uncalibrated", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
-neuron_counts = np.array(["Uncalibrated", 1, 2, 4, 6, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
+bit_resolutions = np.array(["Raw", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
+neuron_counts = np.array(["Raw", 1, 2, 4, 6, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
 
 # Example RMSE data (replace these with your actual computed RMSE values)
 rmse_bit_resolution = np.array([1.184221, 0.160526, 0.054192, 0.014177, 0.003746, 0.001705,
@@ -53,19 +54,24 @@ residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
 
 # Set axis labels
 # residuals_ax.set_xlabel('Bit Resolution', fontsize=12)
-residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXLARGE, labelpad=0)
+residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXXLARGE, labelpad=0)
 residuals_ax.set_yscale('log')  # Log scale for better visibility
 residuals_ax.grid(True)
 
 # Set bold and large font for tick labels
-residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
                          labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True)
-residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
                          labelcolor='black', top=True, bottom=True, left=True, right=True)
 
 # Apply bold and Helvetica to tick labels using setp()
-plt.setp(residuals_ax.get_xticklabels(), fontsize=18)
-plt.setp(residuals_ax.get_yticklabels(), fontsize=18)
+plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)
+plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)
+
+# xtick_labels = residuals_ax.get_xticklabels()
+# for label in xtick_labels:
+#     if label.get_text() == "Raw":
+#         label.set_fontsize(SIZE_LARGE)  # Set to smaller size
 
 # Set grid lines and add minor ticks
 residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
@@ -76,7 +82,23 @@ residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
 plt.yscale('log')  # Log scale for better visibility
 
 # Add legend
-residuals_ax.legend()
+# residuals_ax.legend()
+residuals_ax.legend(
+    # loc="upper right",
+    # fontsize=SIZE_DEFAULT,
+    prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
+    frameon=True,  # Enable the frame (box around the legend)
+    edgecolor='black',  # Set the outline color
+    framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+    fancybox=False,  # Disable rounded corners
+    shadow=False,  # No shadow
+    facecolor='white',  # Background color of the legend box
+    borderpad=0.5  # Padding inside the legend box
+)
+
+# Set the thickness of the legend box outline (bold)
+legend = residuals_ax.get_legend()
+legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
 
 # Adjust layout
 plt.tight_layout()
@@ -102,19 +124,25 @@ residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
 
 # Set axis labels
 # residuals_ax.set_xlabel('Number of Neurons', fontsize=12)
-residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXLARGE, labelpad=0)
+residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$', fontsize=SIZE_XXXLARGE, labelpad=0)
 residuals_ax.set_yscale('log')  # Log scale for better visibility
 residuals_ax.grid(True)
 
 # Set bold and large font for tick labels
-residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=10, direction='in',
+residuals_ax.tick_params(axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
                          labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True)
-residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=5, direction='in',
+residuals_ax.tick_params(axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
                          labelcolor='black', top=True, bottom=True, left=True, right=True)
 
 # Apply bold and Helvetica to tick labels using setp()
-plt.setp(residuals_ax.get_xticklabels(), fontsize=18)
-plt.setp(residuals_ax.get_yticklabels(), fontsize=18)
+plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)
+plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)
+
+# xtick_labels = residuals_ax.get_xticklabels()
+# for label in xtick_labels:
+#     if label.get_text() == "Raw":
+#         label.set_fontsize(SIZE_LARGE)  # Set to smaller size
+#         # label.set_position((label.get_position()[0] - 5, label.get_position()[1]))
 
 # Set grid lines and add minor ticks
 residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
@@ -125,7 +153,23 @@ residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
 plt.yscale('log')  # Log scale for better visibility
 
 # Add legend
-residuals_ax.legend()
+# residuals_ax.legend()
+residuals_ax.legend(
+    # loc="upper right",
+    # fontsize=SIZE_DEFAULT,
+    prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
+    frameon=True,  # Enable the frame (box around the legend)
+    edgecolor='black',  # Set the outline color
+    framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+    fancybox=False,  # Disable rounded corners
+    shadow=False,  # No shadow
+    facecolor='white',  # Background color of the legend box
+    borderpad=0.5  # Padding inside the legend box
+)
+
+# Set the thickness of the legend box outline (bold)
+legend = residuals_ax.get_legend()
+legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
 
 # Adjust layout
 plt.tight_layout()
