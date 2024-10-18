@@ -3,7 +3,7 @@ import random
 from Sensor_Graphs import *
 
 
-SAVE_GRAPHS = True
+SAVE_GRAPHS = False
 
 # # Convert new data to CSV # Raw_to_CSV.py
 # # write_raw_data_to_csv()  # Original to Parsed
@@ -29,7 +29,7 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 # # Primary
 # # analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test_range=[TEST_NUM], save_graphs=SAVE_GRAPHS)
-analyze_and_graph_residuals_and_fits_individual_images(SAVE_GRAPHS, True)  # 0.39 to 0.79
+# analyze_and_graph_residuals_and_fits_individual_images(SAVE_GRAPHS, True)  # 0.39 to 0.79
 # graph_sensor_data(SAVE_GRAPHS)
 
 
@@ -47,11 +47,11 @@ if torch.cuda.is_available():
 	torch.cuda.manual_seed_all(seed_value)
 
 # Secondary Analyses
-# analyze_and_graph_neural_fit(
-# 	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-# 	activation='relu', l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N',
-# 	dropout_rate=0.1, layers=1, units=160, batch_size=64, bit_resolution=8, save_bit=True
-# )
+analyze_and_graph_neural_fit(
+	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
+	activation='relu', l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N',
+	dropout_rate=0.1, layers=1, units=32, batch_size=64, bit_resolution=8, save_bit=True
+)
 # for bit in [6, 8, 12]:
 # 	analyze_and_graph_neural_fit(
 # 		test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,

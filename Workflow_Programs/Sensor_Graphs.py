@@ -66,7 +66,7 @@ def analyze_and_graph_neural_fit(
 		# Set axis limits and grid
 		residuals_ax.set_xlim([0, 1])
 		residuals_ax.set_ylim([-0.04, 0.06])
-		residuals_ax.set_ylabel("$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
+		residuals_ax.set_ylabel(r"$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
 		# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
 		
 		# Bold and increase size of the tick labels
