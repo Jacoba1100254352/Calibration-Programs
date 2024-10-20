@@ -1,19 +1,13 @@
 # from matplotlib.backends.backend_pdf import PdfPages
 import time
 
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
 # from Supplemental_Sensor_Graph_Functions import *
 from Neural_Fit import *
-
-
-seed_value = 42
-
-import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter
-from sklearn.metrics import mean_squared_error
-from matplotlib.backends.backend_pdf import PdfPages
 
 
 # Set general plot appearance
@@ -36,6 +30,9 @@ def analyze_and_graph_neural_fit(
 	show_graphs=True, bit_resolution=12, enable_hyperparameter_tuning=False, mapping='N_vs_N',
 	hyperparams_dict=None, save_bit=False
 ):
+	if hyperparams_dict is None:
+		hyperparams_dict = {}
+	
 	plt.close('all')
 	print(f"Neurons: {units}, bit resolution: {bit_resolution}")
 	
@@ -52,7 +49,10 @@ def analyze_and_graph_neural_fit(
 		inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
 		
 		# Train model and evaluate (placeholder function call)
-		model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
+		if enable_hyperparameter_tuning:
+			model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test_num, hyperparams_dict)
+		else:
+			model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
 		outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
 		
 		# Calculate RMSE
@@ -61,7 +61,7 @@ def analyze_and_graph_neural_fit(
 		print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
 		
 		# Plot residuals
-		residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num-8}", linewidth=3)
+		residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num - 8}", linewidth=3)
 		
 		# Set axis limits and grid
 		residuals_ax.set_xlim([0, 1])
@@ -108,22 +108,22 @@ def analyze_and_graph_neural_fit(
 		
 		# Add legend
 		# residuals_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
-		residuals_ax.legend(
-			loc="upper right",
-			# fontsize=SIZE_DEFAULT,
-			prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
-			frameon=True,  # Enable the frame (box around the legend)
-			edgecolor='black',  # Set the outline color
-			framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
-			fancybox=False,  # Disable rounded corners
-			shadow=False,  # No shadow
-			facecolor='white',  # Background color of the legend box
-			borderpad=0.5  # Padding inside the legend box
-		)
-		
-		# Set the thickness of the legend box outline (bold)
-		legend = residuals_ax.get_legend()
-		legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
+		# residuals_ax.legend(
+		# 	loc="upper right",
+		# 	# fontsize=SIZE_DEFAULT,
+		# 	prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
+		# 	frameon=True,  # Enable the frame (box around the legend)
+		# 	edgecolor='black',  # Set the outline color
+		# 	framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+		# 	fancybox=False,  # Disable rounded corners
+		# 	shadow=False,  # No shadow
+		# 	facecolor='white',  # Background color of the legend box
+		# 	borderpad=0.5  # Padding inside the legend box
+		# )
+		#
+		# # Set the thickness of the legend box outline (bold)
+		# legend = residuals_ax.get_legend()
+		# legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
 	
 	# Save graphs
 	if save_graphs:
@@ -238,23 +238,17 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 	"""
 	for sensor_num in SENSORS_RANGE:
 		# Sleep to avoid HTTPS request limit
-		time.sleep(5)
+		# time.sleep(5)
 		
 		# Load data from CSV files
 		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
 		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
 		
 		# Extract time, force, and ADC data
-		# instron_time = instron_data["Time [s]"]  # .to_numpy()
-		instron_force = instron_data["Force [N]"]  # .to_numpy()
-		# updated_arduino_time = updated_arduino_data["Time [s]"]  # .to_numpy()
 		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]  # .to_numpy()
 		
 		# Get Aligned Arduino Data for ADC results to work regardless of SIMPLIFY's value
 		aligned_arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num))
-		
-		# Calculate force difference for export if needed
-		# difference = instron_force - updated_arduino_force
 		
 		# Ensure arrays are of equal length for accurate comparison
 		min_length = min(len(instron_data), len(updated_arduino_data))
@@ -281,32 +275,18 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# Invert the Instron force
 		instron_force = -instron_force
 		
-		# Second plot: Relationship between Instron force and Arduino ADC values
-		# plt.figure(figsize=(10, 6))
-		# plt.scatter(instron_force, arduino_force, label=f"Calibration Force vs. Pressure Sensor Output", color="purple")
-		# plt.xlabel("Calibration Force [N]")
-		# plt.ylabel(f"Pressure Sensor Output [counts]")
-		# plt.legend()
-		# plt.title(
-		# 	f"Relationship Between Calibration Force and Pressure Sensor Count")
-		# plt.grid(True)
-		#
-		# if save_graphs:
-		# 	plt.savefig(f"/Users/jacobanderson/Downloads/Test {TEST_NUM} Sensor {sensor_num} adc against N.png", dpi=300)
-		# plt.show()
-		
 		# Calculate and plot the best-fit line
 		lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)  # instron_force
 		
 		# Plot the best-fit line over the scatter plot
 		raw_fig, raw_ax = plt.subplots(figsize=(10, 6))
-		plt.scatter(instron_force, arduino_force - min(arduino_force), label="Data", color="black")
-		plt.plot(instron_force, lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
+		plt.scatter(instron_force-min(instron_force), arduino_force - min(arduino_force), label="Data", color="black")
+		plt.plot(instron_force-min(instron_force), lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
 		
 		# Set axis limits and grid
 		raw_ax.set_xlim([0, 0.7])
 		# raw_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
-		raw_ax.set_ylabel("Raw Pressure Sensor Output", fontsize=SIZE_XXLARGE, labelpad=0)
+		raw_ax.set_ylabel("Raw Sensor Output (N)", fontsize=SIZE_XXLARGE, labelpad=0)
 		
 		# Bold and increase size of the tick labels
 		raw_ax.tick_params(
@@ -336,12 +316,12 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# raw_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
 		
 		# Formatter for scientific notation
-		ax = plt.gca()
-		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
-		
-		# Set larger font size for the scientific notation
-		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
+		# ax = plt.gca()
+		# ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+		# ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+		#
+		# # Set larger font size for the scientific notation
+		# ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
 		
 		plt.tight_layout()
 		
@@ -388,13 +368,19 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		# Fit and plot polynomial models of 1st through 4th order
 		for order in [1]:  # range(1, 5)
 			# Sleep to avoid HTTPS request limit
-			time.sleep(2)
+			# time.sleep(2)
 			
-			# Fit the polynomial model
-			coefficients = np.polyfit(instron_force, arduino_force, order)
-			polynomial = np.poly1d(coefficients)
-			predicted_adc_force = polynomial(instron_force)
-			residuals = arduino_force - predicted_adc_force
+			# Fit the polynomial model # Both of these methods provide the same results :)
+			# coefficients = np.polyfit(instron_force, arduino_force, order)
+			# polynomial = np.poly1d(coefficients)
+			# predicted_adc_force = polynomial(instron_force)
+			
+			lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)  # instron_force
+			residuals = arduino_force - lin_fit
+			
+			mse_nn = mean_squared_error(instron_force, residuals)
+			rmse_nn = np.sqrt(mse_nn)
+			print(f"RMSE={rmse_nn:.6f}")
 			
 			residuals_fig, residuals_ax = plt.subplots(figsize=(10, 6))
 			plt.plot(instron_force - min(instron_force) / 2, residuals, '-', label=f"Residuals", color="black", linewidth=2)
@@ -409,8 +395,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			
 			# Set axis limits and grid
 			residuals_ax.set_xlim([0, 0.7])
-			# residuals_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)
-			residuals_ax.set_ylabel("Sensor Error", fontsize=SIZE_XXLARGE, labelpad=-5)  # Sensor Error # $\epsilon$
+			residuals_ax.set_ylabel("Sensor Error (N)", fontsize=SIZE_XXLARGE, labelpad=-5)  # Sensor Error # $\epsilon$
 			
 			# Bold and increase size of the tick labels
 			residuals_ax.tick_params(

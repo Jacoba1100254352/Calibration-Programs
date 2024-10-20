@@ -1,18 +1,22 @@
-import torch
 from sklearn.preprocessing import StandardScaler
 
 from Configuration_Variables import *
 from Supplemental_Sensor_Graph_Functions import *
 
 
-def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='ADC_vs_N'):
+seed_value = 42
+
+
+def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_vs_N'):
 	# Load data for the current test
 	instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=test_num))
 	arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
 	
 	min_length = min(len(instron_data), len(arduino_data))
-	instron_force = instron_data["Force [N]"].iloc[:min_length].values.reshape(-1, 1)
-	sensor_adc = arduino_data[f"ADC{sensor_num}"].iloc[:min_length].values.reshape(-1, 1)
+	instron_force = instron_data["Force [N]"].iloc[:min_length]
+	arduino_force = arduino_data[f"ADC{sensor_num}"].iloc[:min_length]
+	instron_force = instron_force.values.reshape(-1, 1)
+	sensor_adc = arduino_force.values.reshape(-1, 1)
 	
 	# Optional quantization step (if needed)
 	instron_force_quantized = -quantize_data(instron_force.flatten(), bit_resolution)
@@ -35,18 +39,29 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 	from sklearn.model_selection import train_test_split
 	import itertools
 	
+	torch.manual_seed(seed_value)
+	np.random.seed(seed_value)
+	random.seed(seed_value)
+	
+	if torch.cuda.is_available():
+		torch.cuda.manual_seed(seed_value)
+		torch.cuda.manual_seed_all(seed_value)
+	
+	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
+	
 	# Unpack hyperparameter lists
-	units_list = hyperparams_dict.get('units_list', [64, 128])
-	layers_list = hyperparams_dict.get('layers_list', [1, 2])
-	activation_list = hyperparams_dict.get('activation_list', ['tanh'])
-	dropout_rate_list = hyperparams_dict.get('dropout_rate_list', [0.0, 0.1])
-	l2_reg_list = hyperparams_dict.get('l2_reg_list', [0.0001, 0.001])
-	learning_rate_list = hyperparams_dict.get('learning_rate_list', [0.0005, 0.001])
+	units_list = hyperparams_dict.get('units_list', [16, 32, 64])
+	layers_list = hyperparams_dict.get('layers_list', [1])
+	activation_list = hyperparams_dict.get('activation_list', ['relu'])
+	dropout_rate_list = hyperparams_dict.get('dropout_rate_list', [0.15, 0.2, 0.25])
+	l2_reg_list = hyperparams_dict.get('l2_reg_list', [0.0025, 0.005, 0.0075])
+	learning_rate_list = hyperparams_dict.get('learning_rate_list', [0.0001, 0.00025, 0.0005])
 	epochs_list = hyperparams_dict.get('epochs_list', [100])
-	batch_size_list = hyperparams_dict.get('batch_size_list', [64, 256])
+	batch_size_list = hyperparams_dict.get('batch_size_list', [8, 16, 32])
 	
 	# Split the data into training and validation sets
-	X_train, X_val, y_train, y_val = train_test_split(inputs, targets, test_size=0.2, random_state=42)
+	X_train, X_val, y_train, y_val = train_test_split(inputs, targets, test_size=0.2, random_state=seed_value)
 	
 	# Scale the data
 	input_scaler = StandardScaler()
@@ -71,7 +86,7 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 	
 	# Hyperparameter tuning
 	for (units_, layers_, activation_, dropout_rate_, l2_reg_, learning_rate_, epochs_, batch_size_) in hyperparameter_grid:
-		print(f"Test {test_num}, Hyperparameters: units={units_}, layers={layers_}, activation={activation_}, dropout_rate={dropout_rate_}, l2_reg={l2_reg_}, learning_rate={learning_rate_}, epochs={epochs_}, batch_size={batch_size_}")
+		print(f"Test {test_num}, Hyperparameters: units={units_}, layers={layers_}, activation={activation_}, dropout_rate={dropout_rate_}, l2_reg={l2_reg_}, learning_rate={learning_rate_}, epochs={epochs_}, batch_size={batch_size_}", end="")
 		
 		# Initialize the model
 		model = QuantizedNN(
@@ -137,6 +152,12 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 				'batch_size': batch_size_
 			}
 			best_model_state = model.state_dict()
+		
+		print(f", Validation Loss: {val_loss:.6f}")
+	
+	print(f"Best Validation Loss: {best_val_loss:.6f}")
+	print(f"Best Hyperparameters: {best_hyperparams}")
+	print(f"Best Model State: {best_model_state}")
 	
 	# Retrain the best model on the full dataset
 	model = QuantizedNN(
@@ -149,6 +170,17 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 
 
 def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution):
+	torch.manual_seed(seed_value)
+	np.random.seed(seed_value)
+	random.seed(seed_value)
+	
+	if torch.cuda.is_available():
+		torch.cuda.manual_seed(seed_value)
+		torch.cuda.manual_seed_all(seed_value)
+	
+	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
+	
 	# Initialize scalers
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()
@@ -191,6 +223,7 @@ def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg
 
 
 def evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping):
+	
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	model.eval()
 	with torch.no_grad():

@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Mostly adjusting font sizes, removing large comments, and improving legend">
+    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Final graphing edits as included in the paper.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,6 +116,7 @@
       <workItem from="1729187004126" duration="52000" />
       <workItem from="1729187739643" duration="69000" />
       <workItem from="1729224662898" duration="86000" />
+      <workItem from="1729225623612" duration="1752000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -472,7 +470,15 @@
       <option name="project" value="LOCAL" />
       <updated>1729022921051</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="Final graphing edits as included in the paper.">
+      <option name="closed" value="true" />
+      <created>1729225680584</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1729225680584</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -487,7 +493,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Verified hyperparameter tuning works, but does not yet log which worked best." />
     <MESSAGE value="Hyperparameter tuning adjustments" />
     <MESSAGE value="Printing and analysing mae and mse between polyfit and neural fit. Simplified Project_Manager.py (scratch)" />
     <MESSAGE value="WIP: Working to get the polyfit segmented for better comparison with NN" />
@@ -512,7 +517,8 @@
     <MESSAGE value="Updated all plots to matlab type plots" />
     <MESSAGE value="Plot adjustments and adding saving to PDF" />
     <MESSAGE value="Mostly adjusting font sizes, removing large comments, and improving legend" />
-    <option name="LAST_COMMIT_MESSAGE" value="Mostly adjusting font sizes, removing large comments, and improving legend" />
+    <MESSAGE value="Final graphing edits as included in the paper." />
+    <option name="LAST_COMMIT_MESSAGE" value="Final graphing edits as included in the paper." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
