@@ -24,8 +24,8 @@ SAVE_GRAPHS = False
 # # Apply new calibration coefficients to the data for graphing and verification # Apply_Calibrations_for_Graphing.py
 # apply_calibration_coefficients()  # Aligned to Calibrated
 
-STARTING_TEST = 9
-ENDING_TEST = 9
+STARTING_TEST = 1
+ENDING_TEST = 1
 TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 
 # # Primary
@@ -41,11 +41,11 @@ TEST_RANGE = range(STARTING_TEST, ENDING_TEST + 1)
 # Sensor 4 should have 0.39 to 0.79 removed
 
 # Secondary Analyses
-analyze_and_graph_neural_fit(
-	test_range=TEST_RANGE, sensor_num=2, save_graphs=SAVE_GRAPHS,
-	activation='relu', l2_reg=0.0025, learning_rate=0.00025, epochs=100, mapping='N_vs_N',
-	dropout_rate=0.15, layers=1, units=64, batch_size=16, bit_resolution=8, save_bit=True
-)
+analyze_and_graph_neural_fit_with_linear(
+	test_range=TEST_RANGE, sensor_num=3, save_graphs=SAVE_GRAPHS,
+	activation='relu', l2_reg=0.001, learning_rate=0.0001, epochs=100, mapping='N_vs_N',
+	dropout_rate=0.2, layers=1, units=16, batch_size=64, bit_resolution=8, save_bit=True
+) # 0.005173
 
 # for bit in [6, 8, 12]:
 # 	analyze_and_graph_neural_fit(

@@ -3,6 +3,7 @@ import time
 
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.ticker import ScalarFormatter
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
@@ -24,7 +25,7 @@ plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 
 # Analyze and plot function
-def analyze_and_graph_neural_fit(
+def analyze_and_graph_neural_fit_with_linear(
 	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5,
 	l2_reg=0.01, learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True,
 	show_graphs=True, bit_resolution=12, enable_hyperparameter_tuning=False, mapping='N_vs_N',
@@ -41,99 +42,89 @@ def analyze_and_graph_neural_fit(
 	else:
 		file_name = f"residuals_{units}_neurons" if activation != "relu" else f"residuals_{units}_neurons_relu"
 	
+	# Create figure for residuals
 	residuals_fig, residuals_ax = plt.subplots(figsize=(10, 5))
+	
+	# Create a new figure for the final calibrated output vs raw ADC plot
+	calibrated_fig, calibrated_ax = plt.subplots(figsize=(10, 5))
 	
 	for test_num in test_range:
 		
-		# Load and prepare data (placeholder function call)
-		inputs, targets, instron_force, sensor_adc = load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping)
+		# Load and prepare data (updated to return linear fit residuals)
+		inputs, targets, instron_force, sensor_adc, linear_predictions, arduino_force = load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution, mapping)
 		
-		# Train model and evaluate (placeholder function call)
+		# Get residuals by subtracting the linear fit from the actual values
+		residuals_targets = targets.flatten() - linear_predictions
+		
+		# Train the model on the residuals
 		if enable_hyperparameter_tuning:
-			model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test_num, hyperparams_dict)
+			model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(inputs, residuals_targets, bit_resolution, test_num, hyperparams_dict)
 		else:
-			model, input_scaler, output_scaler = train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
-		outputs, residuals = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
+			model, input_scaler, output_scaler = train_model(inputs, residuals_targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
 		
-		# Calculate RMSE
-		mse_nn = mean_squared_error(targets.flatten(), outputs.flatten())
+		# Evaluate the model (returns residual corrections)
+		residual_corrections, _ = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
+		
+		# Final calibrated output: linear fit + NN-predicted residuals
+		final_calibrated_outputs = linear_predictions + residual_corrections
+		
+		# Calculate RMSE on the final calibrated outputs
+		mse_nn = mean_squared_error(targets.flatten(), final_calibrated_outputs)
 		rmse_nn = np.sqrt(mse_nn)
-		print(f"Test {test_num}, Neural Network Fit: RMSE={rmse_nn:.6f}")
+		print(f"Test {test_num}, Calibrated Fit (Linear + NN): RMSE={rmse_nn:.6f}")
 		
-		# Plot residuals
-		residuals_ax.plot(instron_force.flatten(), residuals, label=f"Test {test_num - 8}", linewidth=3)
+		# Plot residuals (still residuals, but could also plot final calibrated values)
+		residuals_ax.plot(instron_force.flatten(), residual_corrections, label=f"Test {test_num - 8}", linewidth=3, color="black")
 		
-		# Set axis limits and grid
+		# Plot final calibrated output vs raw sensor ADC vs calibration force
+		calibrated_ax.scatter(arduino_force.flatten(), instron_force.flatten(), label=f"Raw Sensor Data (Test {test_num - 8})", linewidth=2, color="black")
+		calibrated_ax.plot(sensor_adc.flatten(), final_calibrated_outputs, label=f"Calibrated Output (Test {test_num - 8})", linewidth=2, color="red")
+		
+		# Customize residuals graph visuals
 		residuals_ax.set_xlim([0, 1])
-		residuals_ax.set_ylim([-0.04, 0.06])
 		residuals_ax.set_ylabel(r"$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
-		# residuals_ax.set_xlabel("Calibration Force (N)", fontsize=SIZE_LARGE, fontweight='bold', family='Helvetica Neue', labelpad=5)  # Bold label
-		
-		# Bold and increase size of the tick labels
 		residuals_ax.tick_params(
 			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
 			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
-		)  # Major ticks on all sides
-		residuals_ax.tick_params(
-			axis='both', which='minor', labelsize=14, width=1.5, length=2.5, direction='in',
-			labelcolor='black', top=True, bottom=True, left=True, right=True
-		)  # Minor ticks on all sides
+		)
+		plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)
+		plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)
+		residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
 		
-		# Apply bold and Helvetica to tick labels using setp() # (Numbers used)
-		plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)  # X ticks
-		plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)  # Y ticks
+		# Customize calibrated output plot visuals
+		calibrated_ax.set_xlim([min(sensor_adc.flatten()), max(sensor_adc.flatten())])
+		calibrated_ax.set_ylim([min(instron_force.flatten()), max(instron_force.flatten())])
+		calibrated_ax.set_xlabel("Sensor ADC", fontsize=SIZE_XXLARGE)
+		calibrated_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_XXLARGE)
+		calibrated_ax.tick_params(
+			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
+			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+		)
+		calibrated_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
 		
-		# SMALL TICKS
-		# Add minor ticks
-		# residuals_ax.xaxis.set_minor_locator(AutoMinorLocator())
-		# residuals_ax.yaxis.set_minor_locator(AutoMinorLocator())
+		# Add legends
+		residuals_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
+		calibrated_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
 		
-		# GRID LINES
-		# Set grid with minor ticks and tick-like lines
-		residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)  # Minor and major grid lines
-		
-		# Add minor tick marks inside the graph
-		# residuals_ax.tick_params(which='minor', length=5, width=1.5, direction='in')  # Shorter ticks for minor grid lines
-		# residuals_ax.tick_params(which='major', length=10, width=2.5, direction='in')  # Longer ticks for major grid lines
-		
-		# Formatter for scientific notation
+		# Scientific notation formatter for residuals plot
 		ax = plt.gca()
 		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
 		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
-		
-		# Set larger font size for the scientific notation
-		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)  # Adjust the font size as needed
+		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)
 		
 		plt.tight_layout()
-		
-		# Add legend
-		# residuals_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
-		# residuals_ax.legend(
-		# 	loc="upper right",
-		# 	# fontsize=SIZE_DEFAULT,
-		# 	prop={'family': 'Helvetica Neue', 'size': SIZE_DEFAULT},  # Set font to Helvetica
-		# 	frameon=True,  # Enable the frame (box around the legend)
-		# 	edgecolor='black',  # Set the outline color
-		# 	framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
-		# 	fancybox=False,  # Disable rounded corners
-		# 	shadow=False,  # No shadow
-		# 	facecolor='white',  # Background color of the legend box
-		# 	borderpad=0.5  # Padding inside the legend box
-		# )
-		#
-		# # Set the thickness of the legend box outline (bold)
-		# legend = residuals_ax.get_legend()
-		# legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
 	
 	# Save graphs
 	if save_graphs:
-		plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
+		residuals_fig.savefig(f"/path/to/save/{file_name}_residuals.pdf", dpi=300)
+		calibrated_fig.savefig(f"/path/to/save/{file_name}_calibrated_vs_raw.pdf", dpi=300)
 	
 	# Show graphs
 	if show_graphs:
 		plt.show()
 	
 	plt.close(residuals_fig)
+	plt.close(calibrated_fig)
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(

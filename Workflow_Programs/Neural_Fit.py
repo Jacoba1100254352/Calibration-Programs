@@ -7,7 +7,7 @@ from Supplemental_Sensor_Graph_Functions import *
 seed_value = 42
 
 
-def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_vs_N'):
+def load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution, mapping='N_vs_N'):
 	# Load data for the current test
 	instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=test_num))
 	arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
@@ -17,6 +17,7 @@ def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_vs_N'
 	arduino_force = arduino_data[f"ADC{sensor_num}"].iloc[:min_length]
 	instron_force = instron_force.values.reshape(-1, 1)
 	sensor_adc = arduino_force.values.reshape(-1, 1)
+	arduino_force_2 = -arduino_force.values.reshape(-1, 1)
 	
 	# Optional quantization step (if needed)
 	instron_force_quantized = -quantize_data(instron_force.flatten(), bit_resolution)
@@ -32,7 +33,10 @@ def load_and_prepare_data(sensor_num, test_num, bit_resolution, mapping='N_vs_N'
 	else:
 		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
 	
-	return inputs, targets, instron_force_quantized, sensor_adc_quantized
+	# Get the line of best fit for linear calibration
+	linear_predictions = calculate_line_of_best_fit(inputs.flatten(), targets.flatten())
+	
+	return inputs, targets, instron_force_quantized, sensor_adc_quantized, linear_predictions, arduino_force_2
 
 
 def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test_num, hyperparams_dict):
@@ -184,6 +188,10 @@ def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg
 	# Initialize scalers
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()
+	
+	# Reshape the targets to be 2D (needed by the scaler)
+	targets = targets.reshape(-1, 1)
+	
 	inputs_scaled = input_scaler.fit_transform(inputs)
 	targets_scaled = output_scaler.fit_transform(targets)
 	
