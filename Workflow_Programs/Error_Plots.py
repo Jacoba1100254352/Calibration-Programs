@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.ticker import ScalarFormatter
 
 
 # Set general plot appearance
@@ -16,21 +15,25 @@ plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
 plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 # Data for bit resolutions and number of neurons
-bit_resolutions = np.array(["Raw", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
 neuron_counts = np.array(["Raw", 1, 2, 4, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
+bit_resolutions = np.array(["Raw", 2, 4, 6, 8, 10, 12])  # Bit resolutions including "Uncalibrated", neuron: 160
 
 # Originals
-rmse_bit_resolution = np.array([0.418916, 0.160526, 0.054192, 0.014177, 0.003746, 0.001705, 0.001739])  # relu: (with tanh hyperparams) RMSE for different bit resolutions, including uncalibrated
-# rmse_neuron_count = np.array([0.418916, 0.035187, 0.021183, 0.013987, 0.009300, 0.006065, 0.002957, 0.003753, 0.002102])  # relu: (with tanh hyperparams) 12-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.005, learning_rate=0.00075, epochs=100, mapping='N_vs_N', dropout_rate=0.1, layers=1, units=160, batch_size=256, bit_resolution=12
-# rmse_neuron_count = np.array([0.418916, 0.077522, 0.080658, 0.019136, 0.013817, 0.007456, 0.005551, 0.004759, 0.005171])  # relu: (with tanh hyperparams) 8-bit RMSE for different neuron counts
-# rmse_neuron_count = np.array([0.418916, 0.116598, 0.081327, 0.081509, 0.016374, 0.018219, 0.007681, 0.007193, 0.005277])  # relu: (with new, faulty hyperparams) 8-bit RMSE for different neuron counts
+# rmse_bit_resolution = np.array([0.000761, 0.160526, 0.054192, 0.014177, 0.003746, 0.001705, 0.001739])  #relu: (with tanh hyperparams) RMSE for different bit resolutions, including uncalibrated
+# rmse_neuron_count = np.array([0.000761, 0.097820, 0.065765, 0.053620, 0.010991, 0.012243, 0.006465, 0.004423, 0.005071])  # relu: (with new hyperparams (dedicated to test 9) 8-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.0025, learning_rate=0.00025, epochs=100, mapping='N_vs_N', dropout_rate=0.15, layers=1, units=units, batch_size=16, bit_resolution=8
 
-rmse_neuron_count = np.array([0.418916, 0.097820, 0.065765, 0.053620, 0.010991, 0.012243, 0.006465, 0.004423, 0.005071])  # relu: (with new hyperparams (dedicated to test 9) 8-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.0025, learning_rate=0.00025, epochs=100, mapping='N_vs_N', dropout_rate=0.15, layers=1, units=units, batch_size=16, bit_resolution=8
-# rmse_neuron_count = np.array([0.418916, 0.084920, 0.091073, 0.066192, 0.023281, 0.014944, 0.007273, 0.005592, 0.005874])  # relu: (with new hyperparams (1 of 2 (one with 256 batch)) 8-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.005, learning_rate=0.0005, epochs=100, mapping='N_vs_N', dropout_rate=0.1, layers=1, units=units, batch_size=256, bit_resolution=8
-# rmse_neuron_count = np.array([0.418916, 0.115661, 0.081025, 0.081536, 0.015655, 0.017728, 0.006509, 0.006138, 0.003693])  # relu: (with new hyperparams (2 of 2 (one with 32 batch)) 8-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.005, learning_rate=0.0005, epochs=100, mapping='N_vs_N', dropout_rate=0.2, layers=1, units=units, batch_size=32, bit_resolution=12
+# Baseline based on original data at bit resolution
+# bit_resolutions = np.array(["Raw", "B2", 2, "B4", 4, "B6", 6, "B8", 8, "B10", 10, "B12", 12])  # Bit resolutions including "Uncalibrated", neuron: 128
+# neuron_counts = np.array(["Raw", "B", 1, 2, 4, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
+# rmse_neuron_count = np.array([0.000761, 0.003557, 0.003558, 0.003536, 0.003520, 0.003535, 0.003509, 0.003507, 0.003507, 0.003509]) # bit: 8
+# rmse_bit_resolution = np.array([0.000761, 0.160485, 0.160576, 0.055334, 0.054070, 0.013829, 0.013781, 0.003557, 0.003509, 0.001175, 0.000947, 0.000822, 0.000433]) # neurons: 128
 
-# rmse_bit_resolution = np.array([0.418916, 0.162081, 0.054298, 0.014876, 0.005299, 0.005331, 0.005084])  # relu: RMSE for different bit resolutions, including uncalibrated
-# rmse_neuron_count = np.array([0.418916, 0.280838, 0.280838, 0.075722, 0.013051, 0.015576, 0.005593, 0.004132, 0.005247, 0.003716])  # relu: RMSE for different neuron counts
+
+# New Setup
+rmse_neuron_count = np.array([0.000761, 0.003558, 0.003536, 0.003520, 0.003535, 0.003509, 0.003507, 0.003507, 0.003509])  # bit: 8
+rmse_bit_resolution = np.array([0.000761, 0.160576, 0.054070, 0.013781, 0.003509, 0.000947, 0.000433])  # neurons: 128
+
+
 
 # Full-scale span (FSS) for FMA sensor (in Newtons)
 full_scale_span_fma = 5.0  # FMA Sensor's full-scale span in Newtons (5 N)
@@ -41,7 +44,7 @@ accuracy_error_fma = accuracy_fma * full_scale_span_fma  # FMA accuracy in N
 
 # Wearable required accuracy based on 3 kPa with a 0.2 kPa tolerance
 # For a platform area of 240 mm² (0.00024 m²)
-wearable_required_accuracy = 0.048/4  # In Newtons (0.2 kPa tolerance * 0.00024 m²)
+wearable_required_accuracy = 0.048 / 4  # In Newtons (0.2 kPa tolerance * 0.00024 m²)
 
 # Create the first plot: RMSE vs Bit Resolution (including "Uncalibrated")
 residuals_fig, residuals_ax = plt.subplots(figsize=(10, 8))
@@ -89,16 +92,16 @@ plt.yscale('log')  # Log scale for better visibility
 # Add legend
 # residuals_ax.legend()
 residuals_ax.legend(
-    # loc="upper right",
-    # fontsize=SIZE_DEFAULT,
-    prop={'family': 'Helvetica Neue', 'size': SIZE_XLARGE},  # Set font to Helvetica
-    frameon=True,  # Enable the frame (box around the legend)
-    edgecolor='black',  # Set the outline color
-    framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
-    fancybox=False,  # Disable rounded corners
-    shadow=False,  # No shadow
-    facecolor='white',  # Background color of the legend box
-    borderpad=0.5  # Padding inside the legend box
+	# loc="upper right",
+	# fontsize=SIZE_DEFAULT,
+	prop={'family': 'Helvetica Neue', 'size': SIZE_XLARGE},  # Set font to Helvetica
+	frameon=True,  # Enable the frame (box around the legend)
+	edgecolor='black',  # Set the outline color
+	framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+	fancybox=False,  # Disable rounded corners
+	shadow=False,  # No shadow
+	facecolor='white',  # Background color of the legend box
+	borderpad=0.5  # Padding inside the legend box
 )
 
 # Set the thickness of the legend box outline (bold)
@@ -161,16 +164,16 @@ plt.yscale('log')  # Log scale for better visibility
 # Add legend
 # residuals_ax.legend()
 residuals_ax.legend(
-    # loc="upper right",
-    # fontsize=SIZE_DEFAULT,
-    prop={'family': 'Helvetica Neue', 'size': SIZE_XLARGE},  # Set font to Helvetica
-    frameon=True,  # Enable the frame (box around the legend)
-    edgecolor='black',  # Set the outline color
-    framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
-    fancybox=False,  # Disable rounded corners
-    shadow=False,  # No shadow
-    facecolor='white',  # Background color of the legend box
-    borderpad=0.5  # Padding inside the legend box
+	# loc="upper right",
+	# fontsize=SIZE_DEFAULT,
+	prop={'family': 'Helvetica Neue', 'size': SIZE_XLARGE},  # Set font to Helvetica
+	frameon=True,  # Enable the frame (box around the legend)
+	edgecolor='black',  # Set the outline color
+	framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+	fancybox=False,  # Disable rounded corners
+	shadow=False,  # No shadow
+	facecolor='white',  # Background color of the legend box
+	borderpad=0.5  # Padding inside the legend box
 )
 
 # Set the thickness of the legend box outline (bold)

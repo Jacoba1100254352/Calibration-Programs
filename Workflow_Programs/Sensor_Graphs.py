@@ -1,10 +1,7 @@
 # from matplotlib.backends.backend_pdf import PdfPages
-import time
 
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.ticker import ScalarFormatter
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
 
 # from Configuration_Variables import *
 # from Supplemental_Sensor_Graph_Functions import *
@@ -24,12 +21,46 @@ plt.rc("axes", labelsize=SIZE_LARGE)  # X and Y labels fontsize
 plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 
 
+def setup_basic_plot(plot, apply_sci=True):
+	plot.tick_params(
+		axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
+		labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
+	)
+	plt.setp(plot.get_xticklabels(), fontsize=SIZE_XXLARGE)
+	plt.setp(plot.get_yticklabels(), fontsize=SIZE_XXLARGE)
+	plot.grid(True, which='both', linestyle='-', linewidth=1.5)
+	
+	plot.legend(
+		# loc="upper right",
+		# fontsize=SIZE_DEFAULT,
+		prop={'family': 'Helvetica Neue', 'size': SIZE_LARGE},  # Set font to Helvetica
+		frameon=True,  # Enable the frame (box around the legend)
+		edgecolor='black',  # Set the outline color
+		framealpha=1,  # Set the transparency of the frame (1 = fully opaque)
+		fancybox=False,  # Disable rounded corners
+		shadow=False,  # No shadow
+		facecolor='white',  # Background color of the legend box
+		borderpad=0.5  # Padding inside the legend box
+	)
+	
+	# Set the thickness of the legend box outline (bold)
+	legend = plot.get_legend()
+	legend.get_frame().set_linewidth(2.0)  # Increase the outline thickness
+	
+	if apply_sci:
+		plot.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+		plot.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+		plot.yaxis.get_offset_text().set_size(SIZE_XLARGE)
+	
+	plt.tight_layout()
+
+
 # Analyze and plot function
 def analyze_and_graph_neural_fit_with_linear(
-	test_range, sensor_num, units=64, layers=2, activation='tanh', dropout_rate=0.5,
-	l2_reg=0.01, learning_rate=0.001, epochs=100, batch_size=32, save_graphs=True,
-	show_graphs=True, bit_resolution=12, enable_hyperparameter_tuning=False, mapping='N_vs_N',
-	hyperparams_dict=None, save_bit=False
+	test_range, sensor_num, units=32, layers=1, activation='relu', dropout_rate=0.2,
+	l2_reg=0.001, learning_rate=0.0001, epochs=100, batch_size=32, save_graphs=True,
+	show_graphs=True, bit_resolution=16, enable_hyperparameter_tuning=False,
+	hyperparams_dict=None, save_bit=False, plot_4=False
 ):
 	if hyperparams_dict is None:
 		hyperparams_dict = {}
@@ -42,89 +73,93 @@ def analyze_and_graph_neural_fit_with_linear(
 	else:
 		file_name = f"residuals_{units}_neurons" if activation != "relu" else f"residuals_{units}_neurons_relu"
 	
-	# Create figure for residuals
-	residuals_fig, residuals_ax = plt.subplots(figsize=(10, 5))
-	
-	# Create a new figure for the final calibrated output vs raw ADC plot
-	calibrated_fig, calibrated_ax = plt.subplots(figsize=(10, 5))
+	# Create new figures for the final calibrated output vs raw ADC plot
+	residuals_2_fig, residuals_2_ax = plt.subplots(figsize=(10, 5))
 	
 	for test_num in test_range:
 		
-		# Load and prepare data (updated to return linear fit residuals)
-		inputs, targets, instron_force, sensor_adc, linear_predictions, arduino_force = load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution, mapping)
+		# Load and prepare data (returns sensor data in N and Instron force)
+		inputs, targets, _, _ = load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution)
 		
-		# Get residuals by subtracting the linear fit from the actual values
-		residuals_targets = targets.flatten() - linear_predictions
+		# Calculate linear fit coefficients
+		m, b = calculate_linear_fit(targets, inputs)
+		
+		# Apply linear transformation to sensor data to map from ADC to N
+		linear_predictions = m * inputs + b  # Linear predictions in N
+		
+		# Calculate residuals as the difference between actual Instron Force and linear predictions
+		residuals_input = targets.flatten() - linear_predictions.flatten()
 		
 		# Train the model on the residuals
 		if enable_hyperparameter_tuning:
-			model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(inputs, residuals_targets, bit_resolution, test_num, hyperparams_dict)
+			model, input_scaler, output_scaler, best_hyperparams = train_model_with_hyperparameter_tuning(inputs, residuals_input, bit_resolution, test_num, hyperparams_dict)
 		else:
-			model, input_scaler, output_scaler = train_model(inputs, residuals_targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution)
+			# Train the model on the residuals, using the mapped sensor data as inputs and residuals as targets
+			model, input_scaler, output_scaler = train_model(
+				inputs, residuals_input, units, layers, activation, dropout_rate,
+				l2_reg, learning_rate, epochs, batch_size, bit_resolution
+			)
 		
-		# Evaluate the model (returns residual corrections)
-		residual_corrections, _ = evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping)
+		# Evaluate the model to get residual corrections
+		residual_corrections = evaluate_model(model, inputs, residuals_input, input_scaler, output_scaler)
 		
 		# Final calibrated output: linear fit + NN-predicted residuals
-		final_calibrated_outputs = linear_predictions + residual_corrections
+		final_calibrated_outputs = linear_predictions.flatten() + residual_corrections.flatten()
 		
 		# Calculate RMSE on the final calibrated outputs
 		mse_nn = mean_squared_error(targets.flatten(), final_calibrated_outputs)
 		rmse_nn = np.sqrt(mse_nn)
 		print(f"Test {test_num}, Calibrated Fit (Linear + NN): RMSE={rmse_nn:.6f}")
 		
-		# Plot residuals (still residuals, but could also plot final calibrated values)
-		residuals_ax.plot(instron_force.flatten(), residual_corrections, label=f"Test {test_num - 8}", linewidth=3, color="black")
+		# Calculate RMSE for the base residuals (linear fit only)
+		mse_base = mean_squared_error(targets.flatten(), linear_predictions.flatten())
+		rmse_base = np.sqrt(mse_base)
+		print(f"Test {test_num}, Base Residuals Quantized: RMSE={rmse_base:.6f}")
 		
-		# Plot final calibrated output vs raw sensor ADC vs calibration force
-		calibrated_ax.scatter(arduino_force.flatten(), instron_force.flatten(), label=f"Raw Sensor Data (Test {test_num - 8})", linewidth=2, color="black")
-		calibrated_ax.plot(sensor_adc.flatten(), final_calibrated_outputs, label=f"Calibrated Output (Test {test_num - 8})", linewidth=2, color="red")
+		if plot_4: # linear_predictions = mapped sensor
+			calibrated_fig, calibrated_ax = plt.subplots(figsize=(10, 5))
+			residuals_fig, residuals_ax = plt.subplots(figsize=(10, 5))
+			
+			# Plot final calibrated output vs raw sensor ADC vs calibration force
+			calibrated_ax.scatter(targets.flatten(), linear_predictions.flatten(), label=f"Raw Sensor Data (Test {test_num - 8})", linewidth=2, color="black")
+			calibrated_ax.plot(targets.flatten(), final_calibrated_outputs.flatten(), label=f"Calibrated Output (Test {test_num - 8})", linewidth=2, color="red")
+			
+			# Customize calibrated output plot visuals
+			calibrated_ax.set_xlim([0, 1])
+			calibrated_ax.set_ylim([0, 1])
+			calibrated_ax.set_ylabel("Raw Sensor Output (N)", fontsize=SIZE_XXLARGE)
+			setup_basic_plot(calibrated_ax, False)
+			
+			# Plot Base residuals (Quantized)
+			residuals_ax.plot(targets.flatten(), -residuals_input, label=f"Test {test_num - 8}", linewidth=3, color="black")
+			
+			# Customize residuals graph visuals
+			residuals_ax.set_xlim([0, 1])
+			residuals_ax.set_ylabel(r"Raw $\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
+			setup_basic_plot(residuals_ax)
+			
+			# plt.close(residuals_fig)
+			# plt.close(calibrated_fig)
+			
+		# Plot residuals after calibration
+		residuals_2_ax.plot(targets.flatten(), targets.flatten() - final_calibrated_outputs.flatten(), label=f"Test {test_num - 8}", linewidth=3)
 		
-		# Customize residuals graph visuals
-		residuals_ax.set_xlim([0, 1])
-		residuals_ax.set_ylabel(r"$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
-		residuals_ax.tick_params(
-			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
-			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
-		)
-		plt.setp(residuals_ax.get_xticklabels(), fontsize=SIZE_XXLARGE)
-		plt.setp(residuals_ax.get_yticklabels(), fontsize=SIZE_XXLARGE)
-		residuals_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
-		
-		# Customize calibrated output plot visuals
-		calibrated_ax.set_xlim([min(sensor_adc.flatten()), max(sensor_adc.flatten())])
-		calibrated_ax.set_ylim([min(instron_force.flatten()), max(instron_force.flatten())])
-		calibrated_ax.set_xlabel("Sensor ADC", fontsize=SIZE_XXLARGE)
-		calibrated_ax.set_ylabel("Calibration Force (N)", fontsize=SIZE_XXLARGE)
-		calibrated_ax.tick_params(
-			axis='both', which='major', labelsize=18, width=2.5, length=5, direction='in',
-			labelcolor='black', pad=10, top=True, bottom=True, left=True, right=True
-		)
-		calibrated_ax.grid(True, which='both', linestyle='-', linewidth=1.5)
-		
-		# Add legends
-		residuals_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
-		calibrated_ax.legend(loc="upper right", fontsize=SIZE_LARGE)
-		
-		# Scientific notation formatter for residuals plot
-		ax = plt.gca()
-		ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-		ax.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
-		ax.yaxis.get_offset_text().set_size(SIZE_XLARGE)
+		# Customize residuals output plot visuals
+		residuals_2_ax.set_xlim([0, 1])
+		residuals_2_ax.set_ylabel(r"$\epsilon$ (N)", fontsize=SIZE_XXXLARGE, labelpad=-5)
+		setup_basic_plot(residuals_2_ax)
 		
 		plt.tight_layout()
 	
 	# Save graphs
 	if save_graphs:
-		residuals_fig.savefig(f"/path/to/save/{file_name}_residuals.pdf", dpi=300)
-		calibrated_fig.savefig(f"/path/to/save/{file_name}_calibrated_vs_raw.pdf", dpi=300)
+		residuals_2_fig.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
 	
 	# Show graphs
 	if show_graphs:
 		plt.show()
 	
-	plt.close(residuals_fig)
-	plt.close(calibrated_fig)
+	plt.close(residuals_2_fig)
 
 
 def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_tests(
@@ -196,10 +231,10 @@ def analyze_and_graph_calibrated_data_and_fits_single_pdf_combined_multiple_test
 				residuals = updated_arduino_force - lin_fit
 				
 				# Calculate MSE and MAE for polynomial fit
-				mse_poly = mean_squared_error(updated_arduino_force, lin_fit)
-				mae_poly = mean_absolute_error(updated_arduino_force, lin_fit)
-				
-				print(f"Test {_TEST_NUM}, Polynomial Fit (Order {order}): MSE={mse_poly:.6f}, MAE={mae_poly:.6f}")
+				# mse_poly = mean_squared_error(updated_arduino_force, lin_fit)
+				# mae_poly = mean_absolute_error(updated_arduino_force, lin_fit)
+				#
+				# print(f"Test {_TEST_NUM}, Polynomial Fit (Order {order}): MSE={mse_poly:.6f}, MAE={mae_poly:.6f}")
 				
 				# Apply smoothing using the specified method
 				residuals_smoothed = residuals  # apply_smoothing(residuals, method=smoothing_method, window_size=window_size, poly_order=poly_order)
@@ -252,16 +287,16 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			arduino_force = -updated_arduino_force.iloc[:min_length]
 		
 		# Find the index where the Instron force first reaches the threshold
-		trim_force_threshold = -0.005
-		truncate_force_threshold = -0.7
-		trim_index = instron_force.ge(trim_force_threshold).idxmin()
-		truncate_index = instron_force.ge(truncate_force_threshold).idxmin()
+		# trim_force_threshold = -0.005
+		# truncate_force_threshold = -0.7
+		# trim_index = instron_force.ge(trim_force_threshold).idxmin()
+		# truncate_index = instron_force.ge(truncate_force_threshold).idxmin()
 		
 		# Truncate all datasets from this index onwards to ensure consistent lengths
-		instron_force = instron_force[trim_index:]
-		arduino_force = arduino_force[trim_index:]
-		instron_force = instron_force[:truncate_index]
-		arduino_force = arduino_force[:truncate_index]
+		# instron_force = instron_force[trim_index:]
+		# arduino_force = arduino_force[trim_index:]
+		# instron_force = instron_force[:truncate_index]
+		# arduino_force = arduino_force[:truncate_index]
 		
 		# Invert the Instron force
 		instron_force = -instron_force
@@ -271,8 +306,8 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 		
 		# Plot the best-fit line over the scatter plot
 		raw_fig, raw_ax = plt.subplots(figsize=(10, 6))
-		plt.scatter(instron_force-min(instron_force), arduino_force - min(arduino_force), label="Data", color="black")
-		plt.plot(instron_force-min(instron_force), lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
+		plt.scatter(instron_force - min(instron_force), arduino_force - min(arduino_force), label="Data", color="black")
+		plt.plot(instron_force - min(instron_force), lin_fit - min(lin_fit), label="Best-fit line", color="r", linewidth=2)
 		
 		# Set axis limits and grid
 		raw_ax.set_xlim([0, 0.7])
@@ -369,7 +404,7 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 			lin_fit = calculate_line_of_best_fit(instron_force, arduino_force)  # instron_force
 			residuals = arduino_force - lin_fit
 			
-			mse_nn = mean_squared_error(instron_force, residuals)
+			mse_nn = mean_squared_error(instron_force, arduino_force)  # = mean_squared_error(instron_force-lin_fit, residuals)
 			rmse_nn = np.sqrt(mse_nn)
 			print(f"RMSE={rmse_nn:.6f}")
 			

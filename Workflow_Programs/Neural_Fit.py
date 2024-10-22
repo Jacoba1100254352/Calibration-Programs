@@ -1,4 +1,9 @@
-from sklearn.preprocessing import StandardScaler
+import random
+
+import torch
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from Configuration_Variables import *
 from Supplemental_Sensor_Graph_Functions import *
@@ -7,36 +12,54 @@ from Supplemental_Sensor_Graph_Functions import *
 seed_value = 42
 
 
-def load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution, mapping='N_vs_N'):
+def calculate_linear_fit(instron_force, arduino_raw_force):
+	"""
+	Calculate the linear regression coefficients using the closed-form formula
+	for computational efficiency.
+
+	:param instron_force: Array-like, force data from Excel (Instron data).
+	:param arduino_raw_force: Array-like, raw force data from Arduino.
+	:return: Tuple, (m, b) coefficients from the linear fit.
+	"""
+	# Convert input to NumPy arrays for efficient calculation
+	x = np.array(arduino_raw_force)
+	y = np.array(instron_force)
+	
+	# Compute sums and necessary terms for the closed-form solution
+	n = len(x)
+	sum_x = np.sum(x)
+	sum_y = np.sum(y)
+	sum_x_squared = np.sum(x * x)
+	sum_xy = np.sum(x * y)
+	
+	# Calculate slope (m) and intercept (b) using the closed-form formulas
+	m = (n * sum_xy - sum_x * sum_y) / (n * sum_x_squared - sum_x**2)
+	b = (sum_y - m * sum_x) / n
+	
+	return m, b
+
+
+def load_and_prepare_data_with_linear(sensor_num, test_num, bit_resolution):
 	# Load data for the current test
 	instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num, _TEST_NUM=test_num))
 	arduino_data = pd.read_csv(get_data_filepath(ALIGNED_ARDUINO_DIR, sensor_num, _TEST_NUM=test_num))
 	
 	min_length = min(len(instron_data), len(arduino_data))
-	instron_force = instron_data["Force [N]"].iloc[:min_length]
-	arduino_force = arduino_data[f"ADC{sensor_num}"].iloc[:min_length]
-	instron_force = instron_force.values.reshape(-1, 1)
-	sensor_adc = arduino_force.values.reshape(-1, 1)
-	arduino_force_2 = -arduino_force.values.reshape(-1, 1)
+	instron_N_unquantized = instron_data["Force [N]"].iloc[:min_length]
+	sensor_adc_unquantized = arduino_data[f"ADC{sensor_num}"].iloc[:min_length]
+	
+	instron_N_unquantized = instron_N_unquantized.values.reshape(-1, 1)
+	sensor_adc_unquantized = sensor_adc_unquantized.values.reshape(-1, 1)
 	
 	# Optional quantization step (if needed)
-	instron_force_quantized = -quantize_data(instron_force.flatten(), bit_resolution)
-	sensor_adc_quantized = -quantize_data(sensor_adc.flatten(), bit_resolution)
+	instron_N_quantized = -quantize_data(instron_N_unquantized.flatten(), bit_resolution)
+	sensor_adc_quantized = -quantize_data(sensor_adc_unquantized.flatten(), bit_resolution)
 	
 	# Depending on the mapping, set inputs and targets
-	if mapping == 'ADC_vs_N':
-		inputs = instron_force_quantized.reshape(-1, 1)  # Instron force as input
-		targets = sensor_adc_quantized.reshape(-1, 1)  # Raw ADC values as targets
-	elif mapping == 'N_vs_N':
-		inputs = sensor_adc_quantized.reshape(-1, 1)  # ADC values as input
-		targets = instron_force_quantized.reshape(-1, 1)  # Instron force as target
-	else:
-		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
+	inputs = sensor_adc_quantized.reshape(-1, 1)  # ADC values as input
+	targets = instron_N_quantized.reshape(-1, 1)  # Instron force as target
 	
-	# Get the line of best fit for linear calibration
-	linear_predictions = calculate_line_of_best_fit(inputs.flatten(), targets.flatten())
-	
-	return inputs, targets, instron_force_quantized, sensor_adc_quantized, linear_predictions, arduino_force_2
+	return inputs, targets, -instron_N_unquantized, -sensor_adc_unquantized
 
 
 def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test_num, hyperparams_dict):
@@ -55,14 +78,22 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 	torch.backends.cudnn.benchmark = False
 	
 	# Unpack hyperparameter lists
-	units_list = hyperparams_dict.get('units_list', [16, 32, 64])
-	layers_list = hyperparams_dict.get('layers_list', [1])
+	# units_list = hyperparams_dict.get('units_list', [16, 32, 64])
+	# layers_list = hyperparams_dict.get('layers_list', [1])
+	# activation_list = hyperparams_dict.get('activation_list', ['relu'])
+	# dropout_rate_list = hyperparams_dict.get('dropout_rate_list', [0.15, 0.2, 0.25])
+	# l2_reg_list = hyperparams_dict.get('l2_reg_list', [0.0025, 0.005, 0.0075])
+	# learning_rate_list = hyperparams_dict.get('learning_rate_list', [0.0001, 0.00025, 0.0005])
+	# epochs_list = hyperparams_dict.get('epochs_list', [100])
+	# batch_size_list = hyperparams_dict.get('batch_size_list', [8, 16, 32])
+	units_list = hyperparams_dict.get('units_list', [32, 64, 128, 256])
+	layers_list = hyperparams_dict.get('layers_list', [1, 2])
 	activation_list = hyperparams_dict.get('activation_list', ['relu'])
-	dropout_rate_list = hyperparams_dict.get('dropout_rate_list', [0.15, 0.2, 0.25])
-	l2_reg_list = hyperparams_dict.get('l2_reg_list', [0.0025, 0.005, 0.0075])
-	learning_rate_list = hyperparams_dict.get('learning_rate_list', [0.0001, 0.00025, 0.0005])
+	dropout_rate_list = hyperparams_dict.get('dropout_rate_list', [0.0, 0.1, 0.2, 0.5])
+	l2_reg_list = hyperparams_dict.get('l2_reg_list', [0.005, 0.01, 0.02])
+	learning_rate_list = hyperparams_dict.get('learning_rate_list', [0.0005, 0.001, 0.002])  # Try 0.0001 or 0.00001
 	epochs_list = hyperparams_dict.get('epochs_list', [100])
-	batch_size_list = hyperparams_dict.get('batch_size_list', [8, 16, 32])
+	batch_size_list = hyperparams_dict.get('batch_size_list', [32, 64, 256])
 	
 	# Split the data into training and validation sets
 	X_train, X_val, y_train, y_val = train_test_split(inputs, targets, test_size=0.2, random_state=seed_value)
@@ -70,6 +101,10 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 	# Scale the data
 	input_scaler = StandardScaler()
 	output_scaler = StandardScaler()
+	# Reshape the targets to be 2D (needed by the scaler)
+	X_train = X_train.reshape(-1, 1)
+	y_train = y_train.reshape(-1, 1)
+	y_val = y_val.reshape(-1, 1)
 	X_train_scaled = input_scaler.fit_transform(X_train)
 	y_train_scaled = output_scaler.fit_transform(y_train)
 	X_val_scaled = input_scaler.transform(X_val)
@@ -173,7 +208,12 @@ def train_model_with_hyperparameter_tuning(inputs, targets, bit_resolution, test
 	return model, input_scaler, output_scaler, best_hyperparams
 
 
-def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg, learning_rate, epochs, batch_size, bit_resolution):
+def train_model(
+	inputs, residuals_input, units, layers, activation, dropout_rate,
+	l2_reg, learning_rate, epochs, batch_size, bit_resolution,
+	validation_split=0.2, patience=20
+):
+	# Set random seeds for reproducibility
 	torch.manual_seed(seed_value)
 	np.random.seed(seed_value)
 	random.seed(seed_value)
@@ -187,70 +227,122 @@ def train_model(inputs, targets, units, layers, activation, dropout_rate, l2_reg
 	
 	# Initialize scalers
 	input_scaler = StandardScaler()
-	output_scaler = StandardScaler()
+	output_scaler = MinMaxScaler(feature_range=(-1, 1))  # Scale residuals to [-1, 1]
 	
-	# Reshape the targets to be 2D (needed by the scaler)
-	targets = targets.reshape(-1, 1)
+	# Reshape the inputs and residuals to be 2D (needed by the scaler)
+	inputs = inputs.reshape(-1, 1)
+	residuals_input = residuals_input.reshape(-1, 1)
 	
-	inputs_scaled = input_scaler.fit_transform(inputs)
-	targets_scaled = output_scaler.fit_transform(targets)
+	# Split data into training and validation sets
+	inputs_train, inputs_val, residuals_train, residuals_val = train_test_split(
+		inputs, residuals_input, test_size=validation_split, random_state=seed_value
+	)
+	
+	# Scale the data
+	inputs_train_scaled = input_scaler.fit_transform(inputs_train)
+	inputs_val_scaled = input_scaler.transform(inputs_val)
+	
+	residuals_train_scaled = output_scaler.fit_transform(residuals_train)
+	residuals_val_scaled = output_scaler.transform(residuals_val)
 	
 	# Initialize and train the quantized neural network
 	model = QuantizedNN(
-		input_dim=1, units=units, layers=layers, activation=activation, dropout_rate=dropout_rate,
+		input_dim=1, units=units, layers=layers, activation=activation,
+		dropout_rate=dropout_rate,
 		weight_bit_width=bit_resolution, act_bit_width=bit_resolution
 	)
 	
+	# Initialize the model
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	model.to(device)
 	criterion = nn.MSELoss()
 	optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=l2_reg)
 	
-	# Convert data to PyTorch tensors for training
-	inputs_tensor = torch.Tensor(inputs_scaled).to(device)
-	targets_tensor = torch.Tensor(targets_scaled).to(device)
+	# Initialize the learning rate scheduler
+	scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 	
-	dataset = torch.utils.data.TensorDataset(inputs_tensor, targets_tensor)
-	dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+	# Early stopping parameters
+	best_val_loss = float('inf')
+	patience_counter = 0
+	best_model_path = 'best_model.pth'
 	
-	# Train the model
-	for epoch in range(epochs):
+	# Convert data to PyTorch tensors for training and validation
+	inputs_train_tensor = torch.Tensor(inputs_train_scaled).to(device)
+	residuals_train_tensor = torch.Tensor(residuals_train_scaled).to(device)
+	
+	inputs_val_tensor = torch.Tensor(inputs_val_scaled).to(device)
+	residuals_val_tensor = torch.Tensor(residuals_val_scaled).to(device)
+	
+	# Create DataLoaders
+	train_dataset = torch.utils.data.TensorDataset(inputs_train_tensor, residuals_train_tensor)
+	train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+	
+	val_dataset = torch.utils.data.TensorDataset(inputs_val_tensor, residuals_val_tensor)
+	val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+	
+	# Training loop with early stopping
+	for epoch in range(1, epochs + 1):
 		model.train()
-		total_loss = 0
-		for x_batch, y_batch in dataloader:
+		train_loss = 0.0
+		for x_batch, y_batch in train_loader:
 			optimizer.zero_grad()
 			outputs = model(x_batch)
 			loss = criterion(outputs, y_batch)
 			loss.backward()
 			optimizer.step()
-			total_loss += loss.item()
-		if (epoch + 1) % 10 == 0:
-			print(f"Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(dataloader):.6f}")
+			train_loss += loss.item()
+		
+		# Calculate average training loss
+		avg_train_loss = train_loss / len(train_loader)
+		
+		# Evaluate on validation set
+		model.eval()
+		val_loss = 0.0
+		with torch.no_grad():
+			for x_val, y_val in val_loader:
+				outputs_val = model(x_val)
+				loss_val = criterion(outputs_val, y_val)
+				val_loss += loss_val.item()
+		avg_val_loss = val_loss / len(val_loader)
+		
+		# Step the scheduler based on validation loss
+		scheduler.step(avg_val_loss)
+		
+		# Early stopping check
+		if avg_val_loss < best_val_loss:
+			best_val_loss = avg_val_loss
+			patience_counter = 0
+			torch.save(model.state_dict(), best_model_path)
+		# Uncomment the next line for detailed logs
+		# print(f"Epoch {epoch}: Validation loss improved to {avg_val_loss:.6f}. Saving model.")
+		else:
+			patience_counter += 1
+			# Uncomment the next line for detailed logs
+			# print(f"Epoch {epoch}: Validation loss did not improve. Patience counter: {patience_counter}")
+			if patience_counter >= patience:
+				print("Early stopping triggered.")
+				break
+		
+		# Print progress every 10 epochs
+		if epoch % 10 == 0 or epoch == 1:
+			print(f"Epoch [{epoch}/{epochs}], Training Loss: {avg_train_loss:.6f}, Validation Loss: {avg_val_loss:.6f}")
+	
+	# Load the best model
+	model.load_state_dict(torch.load(best_model_path))
 	
 	return model, input_scaler, output_scaler
 
 
-def evaluate_model(model, inputs, instron_force, sensor_adc, input_scaler, output_scaler, mapping):
-	
+def evaluate_model(model, inputs, residuals_input, input_scaler, output_scaler):
 	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 	model.eval()
 	with torch.no_grad():
 		inputs_scaled = input_scaler.transform(inputs)
 		inputs_tensor = torch.Tensor(inputs_scaled).to(device)
 		outputs_scaled = model(inputs_tensor).cpu().numpy()
-		outputs = output_scaler.inverse_transform(outputs_scaled)
+		residual_corrections = output_scaler.inverse_transform(outputs_scaled).flatten()
 	
-	# First Graph: Residuals in N (calibrated sensor N - Instron N)
-	if mapping == 'N_vs_N':
-		# Residuals are calculated as the difference between the calibrated N and Instron N
-		residuals = outputs.flatten() - instron_force.flatten()
-		return outputs.flatten(), residuals
-	
-	# Second Graph: Residuals in ADC (Instron N - ADC values)
-	elif mapping == 'ADC_vs_N':
-		# Residuals are the difference between the ADC values and the predicted output from the model
-		residuals = sensor_adc.flatten() - outputs.flatten()
-		return outputs, residuals
+	return residual_corrections
 
 
 def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):

@@ -4,9 +4,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import tensorflow_model_optimization as tfmot
-import torch
 import torch.nn as nn
-import random
 from brevitas.core.scaling import ScalingImplType
 from brevitas.quant import Int8WeightPerTensorFixedPoint
 from keras.layers import BatchNormalization, Dense, Dropout

@@ -12,13 +12,13 @@ import pandas as pd
 ###    Define Global constants   ###
 
 # Sensor set and test number
-SENSOR_SET = 3
-TEST_NUM = 1
-STARTING_SENSOR = 3
+SENSOR_SET = 1
+TEST_NUM = 9
+STARTING_SENSOR = 2
 
 # Number of sensors to process
 NUM_SENSORS = 4
-SENSORS_RANGE = [3]  # range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)
+SENSORS_RANGE = [2]  # range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)
 
 # This should remain constant (non-configurable)
 TOTAL_NUM_SENSORS = 4

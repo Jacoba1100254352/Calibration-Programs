@@ -4,8 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Final graphing edits as included in the paper.">
+    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Trying new method, not sure if I'm seeing what I'm supposed to be seeing. WIll think about tomorrow.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +34,9 @@
     &quot;assignee&quot;: &quot;Jacoba1100254352&quot;
   }
 }</component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="cf2b4127-71f4-490b-91d5-840f85ac615e" />
+  </component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;git@github.com:Jacoba1100254352/Calibration-Programs.git&quot;,
@@ -57,7 +66,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/jacobanderson/Library/CloudStorage/Box-Box/Nanogroup/Projects/Bioimpedance/Pressure Controller/Jacob's Tests/Calibration Programs&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;
   },
   &quot;keyToStringList&quot;: {
     &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
@@ -117,6 +126,8 @@
       <workItem from="1729187739643" duration="69000" />
       <workItem from="1729224662898" duration="86000" />
       <workItem from="1729225623612" duration="1752000" />
+      <workItem from="1729272357321" duration="56379000" />
+      <workItem from="1729536444929" duration="955000" />
     </task>
     <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -478,7 +489,23 @@
       <option name="project" value="LOCAL" />
       <updated>1729225680584</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="Working code before attempting new method">
+      <option name="closed" value="true" />
+      <created>1729398034633</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1729398034633</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Trying new method, not sure if I'm seeing what I'm supposed to be seeing. WIll think about tomorrow.">
+      <option name="closed" value="true" />
+      <created>1729401336546</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1729401336546</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -493,8 +520,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Hyperparameter tuning adjustments" />
-    <MESSAGE value="Printing and analysing mae and mse between polyfit and neural fit. Simplified Project_Manager.py (scratch)" />
     <MESSAGE value="WIP: Working to get the polyfit segmented for better comparison with NN" />
     <MESSAGE value="WIP: Fixing non-segmented option" />
     <MESSAGE value="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N" />
@@ -518,15 +543,17 @@
     <MESSAGE value="Plot adjustments and adding saving to PDF" />
     <MESSAGE value="Mostly adjusting font sizes, removing large comments, and improving legend" />
     <MESSAGE value="Final graphing edits as included in the paper." />
-    <option name="LAST_COMMIT_MESSAGE" value="Final graphing edits as included in the paper." />
+    <MESSAGE value="Working code before attempting new method" />
+    <MESSAGE value="Trying new method, not sure if I'm seeing what I'm supposed to be seeing. WIll think about tomorrow." />
+    <option name="LAST_COMMIT_MESSAGE" value="Trying new method, not sure if I'm seeing what I'm supposed to be seeing. WIll think about tomorrow." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$clickTest.coverage" NAME="clickTest Coverage Results" MODIFIED="1728344835376" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Error_Plots.coverage" NAME="Error_Plots Coverage Results" MODIFIED="1729224720136" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Error_Plots.coverage" NAME="Error_Plots Coverage Results" MODIFIED="1729547102047" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1728355057927" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1728345110709" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1728923989430" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1729018529482" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1729382324486" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1729616834807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Aligned_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Aligned Instron and Arduino Data Coverage Results" MODIFIED="1728586072153" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
   </component>
 </project>
