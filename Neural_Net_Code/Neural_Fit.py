@@ -1,12 +1,17 @@
 import time
 
 import seaborn as sns
-from keras.callbacks import EarlyStopping
+from keras.api.callbacks import EarlyStopping
+from keras.api.layers import Dense
+from keras.api.models import Sequential
+from keras.api.optimizers import Adam
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from sklearn.preprocessing import StandardScaler
 
-from Configuration_Variables import *
-from Supplemental_Sensor_Graph_Functions import *
+from Neural_Net_Code.Neural_Fit_Supporting_Functions import build_neural_network, hyperparameter_tuning
+from Workflow_Programs.Configuration_Variables import *
+from Workflow_Programs.Supplemental_Sensor_Graph_Functions import *
 
 
 def analyze_and_graph_neural_fit_per_test(
@@ -145,14 +150,14 @@ def train_and_graph_neural_fit_per_test(
 		instron_force_scaled = scaler.fit_transform(instron_force)
 		
 		# Build a new model for each test
-		model = tf.keras.Sequential()
-		model.add(tf.keras.layers.Dense(units=1, input_shape=([1]), activation='linear'))  # Input layer
+		model = Sequential()
+		model.add(Dense(units=1, input_shape=([1]), activation='linear'))  # Input layer
 		for _ in range(layers):
-			model.add(tf.keras.layers.Dense(units=units, activation=activation))  # Hidden layers
-		model.add(tf.keras.layers.Dense(1))  # Output layer for regression
+			model.add(Dense(units=units, activation=activation))  # Hidden layers
+		model.add(Dense(1))  # Output layer for regression
 		
 		# Compile the model
-		model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss='mse')
+		model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
 		
 		# Train the model on this test's data
 		model.fit(instron_force_scaled, updated_arduino_force, epochs=epochs, batch_size=batch_size, verbose=0)
@@ -247,7 +252,7 @@ def graph_sensor_data_difference():
 		plt.show()
 
 
-def graph_sensor_data_difference(test_range):
+def graph_sensor_data_difference_multi_test(test_range):
 	"""
 	Generate and display a single plot that compares the difference between Load Cell
 	and Calibrated Sensor data across all specified tests and sensors.

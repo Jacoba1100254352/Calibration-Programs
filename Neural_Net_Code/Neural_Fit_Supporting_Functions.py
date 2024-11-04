@@ -1,15 +1,88 @@
 import random
 
+import brevitas.nn as qnn
 import torch
-from sklearn.model_selection import train_test_split
+import torch.nn as nn
+from brevitas.core.scaling import ScalingImplType
+from brevitas.quant import Int8WeightPerTensorFixedPoint
+from keras.api.layers import BatchNormalization, Dense, Dropout
+from keras.api.models import Sequential
+from keras.api.optimizers import Adam
+from keras.api.regularizers import l2
+from scikeras.wrappers import KerasRegressor
+from sklearn.metrics import make_scorer, mean_squared_error
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from Configuration_Variables import *
-from Supplemental_Sensor_Graph_Functions import *
+from Workflow_Programs.Configuration_Variables import *
+from Workflow_Programs.Supplemental_Sensor_Graph_Functions import *
 
 
 seed_value = 42
+
+
+class QuantizedNN(nn.Module):
+	def __init__(
+		self, input_dim, units=64, layers=2, activation='relu', dropout_rate=0.5,
+		weight_bit_width=8, act_bit_width=8
+	):
+		super(QuantizedNN, self).__init__()
+		
+		# Define activations
+		activation_functions = {
+			'relu': qnn.QuantReLU,
+			'tanh': qnn.QuantTanh,
+			'sigmoid': qnn.QuantSigmoid,
+			'hardtanh': qnn.QuantHardTanh,
+			'identity': qnn.QuantIdentity
+		}
+		
+		quant_activation_class = activation_functions.get(activation.lower(), qnn.QuantReLU)
+		
+		# Input layer with automatic quantization scaling
+		self.layers = nn.ModuleList([
+			qnn.QuantLinear(
+				input_dim, units,
+				bias=True,
+				weight_bit_width=weight_bit_width,
+				weight_quant=Int8WeightPerTensorFixedPoint,
+				scaling_impl_type=ScalingImplType.STATS
+			)
+		])
+		self.activations = nn.ModuleList([quant_activation_class(bit_width=act_bit_width)])
+		self.dropouts = nn.ModuleList([nn.Dropout(dropout_rate)])
+		
+		# Hidden layers
+		for _ in range(1, layers):
+			self.layers.append(
+				qnn.QuantLinear(
+					units, units,
+					bias=True,
+					weight_bit_width=weight_bit_width,
+					weight_quant=Int8WeightPerTensorFixedPoint,
+					scaling_impl_type=ScalingImplType.STATS
+				)
+			)
+			self.activations.append(quant_activation_class(bit_width=act_bit_width))
+			self.dropouts.append(nn.Dropout(dropout_rate))
+		
+		# Output layer
+		self.output_layer = qnn.QuantLinear(
+			units, 1,
+			bias=True,
+			weight_bit_width=weight_bit_width,
+			weight_quant=Int8WeightPerTensorFixedPoint,
+			scaling_impl_type=ScalingImplType.STATS
+		)
+	
+	def forward(self, x):
+		for layer, activation, dropout in zip(self.layers, self.activations, self.dropouts):
+			x = layer(x)
+			x = activation(x)
+			x = dropout(x)
+		x = self.output_layer(x)
+		return x
 
 
 def calculate_linear_fit(instron_force, arduino_raw_force):
@@ -345,44 +418,88 @@ def evaluate_model(model, inputs, residuals_input, input_scaler, output_scaler):
 	return residual_corrections
 
 
-def plot_overlay(overlay_ax, inputs, targets, outputs, test_num, mapping):
-	if mapping == 'N_vs_N':
-		# Plot calibrated N values (Y) vs Instron N (X)
-		x = targets.flatten()  # Instron N
-		y_pred = outputs.flatten()  # Predicted N (Calibrated)
-		xlabel = "Calibration Force [N]"
-		ylabel = "Calibrated Force [N]"
-	elif mapping == 'ADC_vs_N':
-		# Plot ADC vs Instron N
-		x = targets.flatten()  # Instron N
-		y_pred = outputs.flatten()  # Predicted ADC
-		xlabel = "Calibration Force [N]"
-		ylabel = "ADC Value"
-	else:
-		raise ValueError("Invalid mapping type. Use 'ADC_vs_N' or 'N_vs_N'.")
-	
-	overlay_ax.plot(x, y_pred, label=f"Test {test_num} - Neural Fit", linewidth=2)
-	overlay_ax.set_xlabel(xlabel)
-	overlay_ax.set_ylabel(ylabel)
-	overlay_ax.grid(True)
+# Helper function for quantizing data (if using custom bit resolutions for inputs/outputs)
+def quantize_data(data, bit_resolution):
+	"""Quantize the data to the given bit resolution."""
+	max_val = np.max(np.abs(data))
+	scale = (2**bit_resolution) - 1
+	quantized_data = np.round(data / max_val * scale) * max_val / scale
+	return quantized_data
 
 
-def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
-	x = instron_force.flatten()  # Calibration Force (N) is the baseline
+# Example usage of hyperparameter tuning with RandomizedSearchCV
+def hyperparameter_tuning(X_train, y_train, input_dim):
+	model = KerasRegressor(build_fn=build_neural_network, input_dim=input_dim, verbose=0)
 	
-	# Invert the x-axis to make the direction go from larger to smaller
-	residuals_ax.invert_xaxis()
+	param_dist = {
+		'layers': [1, 2, 3],
+		'units': [32, 64, 128],
+		'activation': ['relu', 'tanh'],  # 'sigmoid'
+		'dropout_rate': [0.2, 0.5, 0.7],
+		'l2_reg': [0.01, 0.001, 0.0001],
+		'learning_rate': [0.01, 0.001, 0.0001],
+		'batch_size': [16, 32, 64, 128, 256],
+		'epochs': [50, 100, 200]
+	}
 	
-	if mapping == 'N_vs_N':
-		# First graph: Residuals in N vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals [N] (Test {test_num})", linewidth=2)  # (Test {test_num})
-		residuals_ax.set_xlabel("Calibration Force [N]")
-		residuals_ax.set_ylabel("Residuals [N]")
-	elif mapping == 'ADC_vs_N':
-		# Second graph: Residuals in ADC vs Instron N
-		residuals_ax.plot(x, residuals, label=f"Residuals [ADC] (Test {test_num})", linewidth=2)  # (Test {test_num})
-		residuals_ax.set_xlabel("Calibration Force [N]")
-		residuals_ax.set_ylabel("Residuals [ADC]")
-	else:
-		raise ValueError("Invalid mapping type. Use 'N_vs_N' or 'ADC_vs_N'.")
-	residuals_ax.grid(True)
+	random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=20, cv=3, verbose=2, scoring=make_scorer(mean_squared_error, greater_is_better=False))
+	
+	random_search_result = random_search.fit(X_train, y_train)
+	
+	# Create a DataFrame to store all results
+	results_df = pd.DataFrame(random_search_result.cv_results_)
+	
+	# Extract relevant columns and sort by rank_test_score
+	results_df = results_df[['params', 'mean_test_score', 'rank_test_score']]
+	sorted_results = results_df.sort_values(by='rank_test_score')
+	
+	# Display all sorted results
+	print("All Sorted Results:")
+	print(sorted_results)
+	
+	# Display the best parameters and score
+	print("\nBest Parameters:", random_search_result.best_params_)
+	print("Best Score:", random_search_result.best_score_)
+	
+	return random_search_result.best_estimator_
+
+
+# Function to build a neural network model
+def build_neural_network(input_dim, layers=2, units=64, activation='relu', dropout_rate=0.5, l2_reg=0.01, learning_rate=0.001):
+	"""
+	Build a customizable neural network model with specified parameters.
+
+	Parameters:
+	- input_dim: Dimension of the input data.
+	- layers: Number of hidden layers in the neural network.
+	- units: Number of units in each hidden layer.
+	- activation: Activation function for hidden layers.
+	- dropout_rate: Dropout rate for regularization.
+	- l2_reg: L2 regularization parameter.
+	- learning_rate: Learning rate for the optimizer.
+
+	Returns:
+	- model: Compiled Keras model.
+	"""
+	# Sequential allows for building on/adding layers
+	model = Sequential()
+	# Fully-Connected or Dense layer, all the neurons are connected to the next/previous layer
+	model.add(Dense(units, input_dim=input_dim, activation=activation, kernel_regularizer=l2(l2_reg)))
+	model.add(Dropout(dropout_rate))  # Dropout layer works by randomly setting a fraction rate of input units to 0 at each update during training time, which helps prevent overfitting.
+	model.add(BatchNormalization())  # Batch normalization works by normalizing the input layer by adjusting and scaling the activations.
+	
+	"""
+	•	L1 and L2 Regularization:
+		•	L2 Regularization (Ridge): Adds a penalty equal to the sum of the squared weights to the loss function (e.g., Dense(units, kernel_regularizer=l2(0.01))).
+		•	L1 Regularization (Lasso): Adds a penalty equal to the sum of the absolute values of the weights (e.g., Dense(units, kernel_regularizer=l1(0.01))).
+		•	Elastic Net: Combines L1 and L2 regularization.
+	"""
+	for _ in range(layers - 1):
+		model.add(Dense(units, activation=activation, kernel_regularizer=l2(l2_reg)))
+		model.add(Dropout(dropout_rate))
+		model.add(BatchNormalization())
+	
+	model.add(Dense(1))  # Output layer for regression
+	model.compile(optimizer=Adam(learning_rate=learning_rate), loss='mse')
+	
+	return model

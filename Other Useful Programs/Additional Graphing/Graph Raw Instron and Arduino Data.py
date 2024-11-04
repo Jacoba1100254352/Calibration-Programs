@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 
-from Configuration_Variables import *
+from Workflow_Programs.Configuration_Variables import *
 
 
 def read_arduino_data(filename, sensor_num):
@@ -12,7 +11,7 @@ def read_arduino_data(filename, sensor_num):
 	:param sensor_num: Integer, the number of the sensor.
 	:return: Tuple, (arduino_time, arduino_force).
 	"""
-	with open(filename, "r") as file:
+	with open(f"../{filename}", "r") as file:
 		lines = file.readlines()
 	arduino_time = [(i + 1) * 20 for i in range(len(lines))]  # Assuming 20s intervals
 	arduino_force = [float(line.split(",")[sensor_num].strip()) for line in lines]
@@ -27,7 +26,7 @@ def read_instron_data(filename, sheet_name):
 	:param sheet_name: String, the name of the sheet to read.
 	:return: Tuple, (excel_time, excel_force).
 	"""
-	excel_data = pd.read_excel(filename, sheet_name=sheet_name)
+	excel_data = pd.read_excel(f"../{filename}", sheet_name=sheet_name)
 	excel_time = excel_data["Time [s]"].values * 1000  # Assuming time needs to be scaled
 	excel_force = [abs(value) for value in excel_data["Force [N]"].values]
 	return excel_time, excel_force

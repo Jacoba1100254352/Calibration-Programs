@@ -1,6 +1,7 @@
 from pandas import read_csv
 
 from Configuration_Variables import *
+# from Workflow_Programs.Supplemental_Sensor_Graph_Functions import apply_smoothing
 
 
 def truncate_and_save_data(sensor_num, force_threshold):
@@ -20,6 +21,11 @@ def truncate_and_save_data(sensor_num, force_threshold):
 	# Truncate both datasets to this length
 	truncated_instron_data = aligned_instron_data.iloc[:truncate_index]
 	truncated_arduino_data = aligned_arduino_data.iloc[:truncate_index]
+	
+	# adc_columns = [col for col in truncated_arduino_data.columns if 'ADC' in col]
+	# for _ in range(3):
+	# 	truncated_arduino_data.loc[:, adc_columns] = apply_smoothing(
+	# 		truncated_arduino_data[adc_columns].copy(), "boxcar", 100, None).astype(np.int32)
 	
 	# Save the truncated data, overwriting the aligned data
 	truncated_instron_data.to_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num), index=False)

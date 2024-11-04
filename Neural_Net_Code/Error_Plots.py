@@ -23,12 +23,13 @@ plt.rc("axes", linewidth=2.5)  # Line width for plot borders
 # rmse_neuron_count = np.array([0.000761, 0.097820, 0.065765, 0.053620, 0.010991, 0.012243, 0.006465, 0.004423, 0.005071])  # relu: (with new hyperparams (dedicated to test 9) 8-bit RMSE for different neuron counts  # activation='relu', l2_reg=0.0025, learning_rate=0.00025, epochs=100, mapping='N_vs_N', dropout_rate=0.15, layers=1, units=units, batch_size=16, bit_resolution=8
 
 # Baseline based on original data at bit resolution
-bit_resolutions = np.array(["B2", 2, "B4", 4, "B6", 6, "B8", 8, "B10", 10, "B12", 12])  # Bit resolutions including "Uncalibrated", neuron: 128
+bit_resolutions = np.array(["B2", 2, "B4", 4, "B6", 6, "B8", 8, "B10", 10, "B12",
+                            12])  # Bit resolutions including "Uncalibrated", neuron: 128
 neuron_counts = np.array(["B", 1, 2, 4, 8, 16, 32, 64, 128])  # Neuron counts, adjust as needed, bit: 12
 # rmse_neuron_count = np.array([0.003557, 0.003558, 0.003536, 0.003520, 0.003535, 0.003509, 0.003507, 0.003507, 0.003509])  # bit: 8
 rmse_neuron_count = np.array([0.000822, 0.000822, 0.000665, 0.000561, 0.000449, 0.000438, 0.000434, 0.000433, 0.000433])  # bit: 12
-rmse_bit_resolution = np.array([0.160485, 0.160576, 0.055334, 0.054070, 0.013829, 0.013781, 0.003557, 0.003509, 0.001175, 0.000947, 0.000822, 0.000433])  # neurons: 128
-
+rmse_bit_resolution = np.array([0.160485, 0.160576, 0.055334, 0.054070, 0.013829, 0.013781, 0.003557, 0.003509, 0.001175, 0.000947,
+                                0.000822, 0.000433])  # neurons: 128
 
 # New Setup (linear data)
 # rmse_neuron_count = np.array([0.000761, 0.003558, 0.003536, 0.003520, 0.003535, 0.003509, 0.003507, 0.003507, 0.003509])  # bit: 8
@@ -95,7 +96,7 @@ residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
 residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$ (N)', fontsize=SIZE_XXXLARGE, labelpad=0)
 residuals_ax.set_yscale('log')  # Log scale for better visibility
 # residuals_ax.set_ylim(1e-4, 1e0)
-residuals_ax.set_ylim(min(rmse_bit_resolution)*0.9, max(rmse_bit_resolution)*1.1)
+residuals_ax.set_ylim(min(rmse_bit_resolution) * 0.9, max(rmse_bit_resolution) * 1.1)
 residuals_ax.grid(True)
 
 # Set bold and large font for tick labels
@@ -167,7 +168,7 @@ residuals_ax.axhline(y=wearable_required_accuracy, color='b', linestyle='--',
 residuals_ax.set_ylabel(r'$\epsilon_{\text{rms}}$ (N)', fontsize=SIZE_XXXLARGE, labelpad=0)
 residuals_ax.set_yscale('log')  # Log scale for better visibility
 # residuals_ax.set_ylim(1e-3, 1e-2)
-residuals_ax.set_ylim(min(rmse_neuron_count)*0.9, max(rmse_neuron_count)*1.1)
+residuals_ax.set_ylim(min(rmse_neuron_count) * 0.9, max(rmse_neuron_count) * 1.1)
 residuals_ax.grid(True)
 
 # Set bold and large font for tick labels
