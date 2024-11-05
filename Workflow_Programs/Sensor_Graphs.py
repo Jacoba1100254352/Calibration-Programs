@@ -3,7 +3,7 @@ from matplotlib.ticker import ScalarFormatter
 from sklearn.metrics import mean_squared_error
 
 from Configuration_Variables import *
-from Supplemental_Sensor_Graph_Functions import *
+from Workflow_Programs.Supporting_and_Archived_Graphing_Functions.Supplemental_Sensor_Graph_Functions import *
 
 
 # Set general plot appearance
@@ -53,6 +53,7 @@ def setup_basic_plot(plot, apply_sci=True):
 	plt.tight_layout()
 
 
+###    NOTE: THIS FUNCTION SHOULD BE CLEANED UP TO USE THE setup_basic_plot FUNCTION   ###
 def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, useArduinoADC=False, trim=False, plot_residuals=True):
 	"""
 	Analyze and export residuals and polynomial fits of different orders for each sensor into .mat files.
@@ -287,3 +288,36 @@ def analyze_and_graph_residuals_and_fits_individual_images(save_graphs=True, use
 					file_name = "first_order_removed"
 					plt.savefig(f"/Users/jacobanderson/Documents/BYU Classes/Current BYU Classes/Research/Papers/{file_name}.pdf", dpi=300)
 				plt.show()
+
+
+def graph_sensor_data(save_graphs=True):
+	"""
+	Generate and save plots comparing force measurements from the Load Cell and calibrated sensors
+	for each sensor. The plot includes the measured force over time and the difference between the two measurements.
+	"""
+	for sensor_num in SENSORS_RANGE:
+		# Load data from CSV files
+		instron_data = pd.read_csv(get_data_filepath(ALIGNED_INSTRON_DIR, sensor_num))
+		updated_arduino_data = pd.read_csv(get_data_filepath(CALIBRATED_ARDUINO_DIR, sensor_num))
+		
+		# Extract time and force data
+		instron_time, instron_force = instron_data["Time [s]"], instron_data["Force [N]"]
+		updated_arduino_time = updated_arduino_data["Time [s]"]
+		updated_arduino_force = updated_arduino_data["Force [N]" if SIMPLIFY else f"Force{sensor_num} [N]"]
+		
+		# Plotting force comparison
+		plt.figure(figsize=(10, 6))
+		plt.plot(updated_arduino_time, updated_arduino_force, label="Calibrated Sensor Force", color="red")
+		plt.plot(instron_time, instron_force, label="Reference Force (Load Cell)", color="blue")
+		difference = instron_force - updated_arduino_force
+		plt.plot(instron_time, difference, label="Force Difference (Load Cell - Sensor)", color="green", linestyle="--")
+		plt.xlabel("Time [s]")
+		plt.ylabel("Force [N]")
+		plt.legend()
+		plt.title(f"Force Measurement Comparison")
+		plt.grid(True)
+		
+		if save_graphs:
+			plt.savefig(get_data_filepath(PLOTS_DIR, sensor_num), dpi=300)
+		
+		plt.show()

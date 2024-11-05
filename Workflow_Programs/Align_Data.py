@@ -1,5 +1,4 @@
 from Configuration_Variables import *
-from Workflow_Programs.Supplemental_Sensor_Graph_Functions import apply_smoothing
 
 
 displacement = 0

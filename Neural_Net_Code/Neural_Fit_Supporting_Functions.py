@@ -16,7 +16,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from Workflow_Programs.Configuration_Variables import *
-from Workflow_Programs.Supplemental_Sensor_Graph_Functions import *
+from Workflow_Programs.Supporting_and_Archived_Graphing_Functions.Supplemental_Sensor_Graph_Functions import *
 
 
 seed_value = 42

@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 
-from Configuration_Variables import *
+from Workflow_Programs.Configuration_Variables import *
 
 
 def read_arduino_data(filename, sensor_num):

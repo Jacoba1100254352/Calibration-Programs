@@ -5,13 +5,9 @@ import serial
 from Configuration_Variables import get_data_filepath, ORIGINAL_ARDUINO_DIR
 
 
-# Test 12 Specimen/sensor test order: 1, 4, 3, 2
-# Sensor Set 2, Test 1-4 on Sensor 4 are done without zeroing, tho as of test 2 no drift noticed (or very minor positive)
-
-# Value of drift at the end of the first test was 0.0011
-# Value of drift at the end of the first test was 0.0008
-# Value of drift at the end of the second test was 0.0013
-
+########################################################################################################################################
+# NOTE: PLEASE MAKE SURE THE CORRECT SENSOR_SET NUMBER AND TEST NUMBER ARE SET IN CONFIGURATION_VARIABLES.PY BEFORE RUNNING THIS SCRIPT.
+########################################################################################################################################
 
 # Modify the port and baud rate as per your setup
 PORT = "/dev/cu.usbserial-10"  # "/dev/cu.usbserial-1420"  # On Windows, this is usually "COMX" where X is a number. # On Mac/Linux, it might be "/dev/ttyUSB0" or similar.

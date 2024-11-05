@@ -34,4 +34,4 @@ apply_calibration_coefficients()  # Aligned to Calibrated
 # Primary
 # analyze_and_graph_residuals_and_fits_single_pdf_combined_multiple_tests(test_range=TEST_RANGE, save_graphs=SAVE_GRAPHS, smoothing_method=None)
 analyze_and_graph_residuals_and_fits_individual_images(SAVE_GRAPHS)
-# graph_sensor_data(SAVE_GRAPHS)
+graph_sensor_data(SAVE_GRAPHS)

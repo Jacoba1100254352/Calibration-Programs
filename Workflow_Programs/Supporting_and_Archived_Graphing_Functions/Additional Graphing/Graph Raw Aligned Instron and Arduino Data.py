@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from Workflow_Programs.Configuration_Variables import *
-from Workflow_Programs.Supplemental_Sensor_Graph_Functions import apply_smoothing
+from Workflow_Programs.Supporting_and_Archived_Graphing_Functions.Supplemental_Sensor_Graph_Functions import apply_smoothing
 
 
 def read_sensor_data(filename):

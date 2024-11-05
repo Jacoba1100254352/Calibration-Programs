@@ -4,31 +4,21 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Updating with new data and results.">
-      <change afterPath="$PROJECT_DIR$/Neural_Net_Code/Previous_Functions_Not_Currently_Used.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Neural_Net_Code/Project_Manager_Neural_Fit.py" afterDir="false" />
+    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Reorganizing (moving NN code for simplification)">
+      <change afterPath="$PROJECT_DIR$/Workflow_Programs/Supporting_and_Archived_Graphing_Functions/Other_Graphing_Functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Adjusting_input_layer_dimensions.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Adjusting_input_layer_dimensions.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Trying_different_recommended_method__not_working__and_the_Loss_is_worse__maybe_look_into_l.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Trying_different_recommended_method__not_working__and_the_Loss_is_worse__maybe_look_into_l.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Instron and Arduino Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Instron and Arduino Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/Arduino.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/codeStyles/Project.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/IRBPositionServoControl/IRBPositionServoControl.ino" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/IRBPositionServoControl_Testing_Modifications/IRBPositionServoControl_Testing_Modifications.ino" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Arduino/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit_Supporting_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit_Supporting_Functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Error_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Error_Plots.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Neural_Fit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit_Supporting_Functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Truncate_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Truncate_Data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Supporting_and_Archived_Graphing_Functions/Supplemental_Sensor_Graph_Functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -97,11 +87,11 @@
       <recent name="$PROJECT_DIR$/Neural_Net_Code" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Workflow_Programs/Supporting_and_Archived_Graphing_Functions" />
       <recent name="$PROJECT_DIR$/Neural_Net_Code" />
       <recent name="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/MainPrograms" />
       <recent name="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/OtherPrograms" />
       <recent name="$PROJECT_DIR$/Other Useful Programs/RTC Calibration/Other" />
-      <recent name="$PROJECT_DIR$/Other Useful Programs/RTC Calibration" />
     </key>
   </component>
   <component name="SharedIndexes">
@@ -155,15 +145,8 @@
       <workItem from="1730736199970" duration="495000" />
       <workItem from="1730737229108" duration="8896000" />
       <workItem from="1730747146154" duration="272000" />
-      <workItem from="1730747436856" duration="4675000" />
-    </task>
-    <task id="LOCAL-00001" summary="Creating separate Calibrations Programs (Research) Repo">
-      <option name="closed" value="true" />
-      <created>1723772200853</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1723772200854</updated>
+      <workItem from="1730747436856" duration="4743000" />
+      <workItem from="1730754451147" duration="3468000" />
     </task>
     <task id="LOCAL-00002" summary="Creating separate Calibrations Programs (Research) Repo">
       <option name="closed" value="true" />
@@ -549,7 +532,15 @@
       <option name="project" value="LOCAL" />
       <updated>1729645076332</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="Reorganizing (moving NN code for simplification)">
+      <option name="closed" value="true" />
+      <created>1730753820160</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1730753820160</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -564,7 +555,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Ignoring polyfit, cleaning up neural fit, trying for N vs N and ADC vs N" />
     <MESSAGE value="Graph 2 perfect and changes based on mapping, Graph 1 needs help" />
     <MESSAGE value="Working except for different analysis between model graphs" />
     <MESSAGE value="Differentiating between dual (non-exactly comparable) and specialized graphing functions" />
@@ -589,7 +579,8 @@
     <MESSAGE value="Trying new method, not sure if I'm seeing what I'm supposed to be seeing. WIll think about tomorrow." />
     <MESSAGE value="Fixing use of quantized vs unquantized and graphs. Also added the Error_Plots.py analysis." />
     <MESSAGE value="Updating with new data and results." />
-    <option name="LAST_COMMIT_MESSAGE" value="Updating with new data and results." />
+    <MESSAGE value="Reorganizing (moving NN code for simplification)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Reorganizing (moving NN code for simplification)" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Instron and Arduino Data Coverage Results" MODIFIED="1729692054836" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
@@ -598,7 +589,7 @@
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Arduino_Data.coverage" NAME="Graph Raw Arduino Data Coverage Results" MODIFIED="1728355057927" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Export_Sensor_Data.coverage" NAME="Export_Sensor_Data Coverage Results" MODIFIED="1728345110709" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Sensor_Graphs.coverage" NAME="Sensor_Graphs Coverage Results" MODIFIED="1729382324486" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
-    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1730753735988" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
+    <SUITE FILE_PATH="coverage/Calibration_Programs$Project_Manager.coverage" NAME="Project_Manager Coverage Results" MODIFIED="1730764615988" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Workflow_Programs" />
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Aligned_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Aligned Instron and Arduino Data Coverage Results" MODIFIED="1728586072153" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
   </component>
 </project>

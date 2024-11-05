@@ -13,12 +13,12 @@ import pandas as pd
 
 # Sensor set and test number
 SENSOR_SET = 3
-TEST_NUM = 6
+TEST_NUM = 1
 STARTING_SENSOR = 1
 
 # Number of sensors to process
 NUM_SENSORS = 4
-SENSORS_RANGE =  [4] #range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)
+SENSORS_RANGE = range(STARTING_SENSOR, STARTING_SENSOR + NUM_SENSORS)  # To limit to a single sensor, use: [4] (replace '4' with the desired sensor number)
 
 # This should remain constant (non-configurable)
 TOTAL_NUM_SENSORS = 4

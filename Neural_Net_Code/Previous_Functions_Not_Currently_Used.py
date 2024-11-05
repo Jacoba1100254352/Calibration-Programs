@@ -303,7 +303,7 @@ def plot_residuals(residuals_ax, instron_force, residuals, test_num, mapping):
 	else:
 		raise ValueError("Invalid mapping type. Use 'N_vs_N' or 'ADC_vs_N'.")
 	residuals_ax.grid(True)
-	
+
 # # Analyze and plot function
 # def analyze_and_graph_neural_fit_with_linear(
 # 	test_range, sensor_num, units=32, layers=1, activation='relu', dropout_rate=0.2,
