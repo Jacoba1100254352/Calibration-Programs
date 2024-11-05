@@ -3,12 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
-# Test 3 sensor 2, Test 4 sensor 4, Test 5 sensor 2, Test 6 sensor 2, Test 7 sensor 2,
-
-# (At the point of Test 8, the calibration coefficients were updated to the new values from Test 6 sensor 2)
-# This will only affect the "Force [N]" and "TotalForce1 [N]" columns
-
 ###    Define Global constants   ###
 
 # Sensor set and test number

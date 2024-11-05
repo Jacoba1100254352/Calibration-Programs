@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from Configuration_Variables import *
+from Workflow_Programs.Configuration_Variables import *
 
 
 def find_percentile_index(force_data, percentile):

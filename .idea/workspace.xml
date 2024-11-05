@@ -4,21 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="Reorganizing (moving NN code for simplification)">
-      <change afterPath="$PROJECT_DIR$/Workflow_Programs/Supporting_and_Archived_Graphing_Functions/Other_Graphing_Functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Adjusting_input_layer_dimensions.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Adjusting_input_layer_dimensions.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Trying_different_recommended_method__not_working__and_the_Loss_is_worse__maybe_look_into_l.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Trying_different_recommended_method__not_working__and_the_Loss_is_worse__maybe_look_into_l.xml" afterDir="false" />
+    <list default="true" id="dded172d-7db1-4891-9b29-5f9c4423684b" name="Changes" comment="More Reorganizing and Simplification">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit_Supporting_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Neural_Net_Code/Neural_Fit_Supporting_Functions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Other Useful Programs/Additional Graphing/Graph Raw Aligned Instron and Arduino Data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Align_Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Configuration_Variables.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Export_Sensor_Data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Project_Manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Sensor_Graphs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Workflow_Programs/Supplemental_Sensor_Graph_Functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/Workflow_Programs/Supporting_and_Archived_Graphing_Functions/Supplemental_Sensor_Graph_Functions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -146,15 +134,7 @@
       <workItem from="1730737229108" duration="8896000" />
       <workItem from="1730747146154" duration="272000" />
       <workItem from="1730747436856" duration="4743000" />
-      <workItem from="1730754451147" duration="3468000" />
-    </task>
-    <task id="LOCAL-00002" summary="Creating separate Calibrations Programs (Research) Repo">
-      <option name="closed" value="true" />
-      <created>1723772221492</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1723772221492</updated>
+      <workItem from="1730754451147" duration="5767000" />
     </task>
     <task id="LOCAL-00003" summary="Adding N N or ADC N comparison">
       <option name="closed" value="true" />
@@ -540,7 +520,15 @@
       <option name="project" value="LOCAL" />
       <updated>1730753820160</updated>
     </task>
-    <option name="localTasksCounter" value="51" />
+    <task id="LOCAL-00051" summary="More Reorganizing and Simplification">
+      <option name="closed" value="true" />
+      <created>1730765239302</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1730765239302</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -555,7 +543,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Graph 2 perfect and changes based on mapping, Graph 1 needs help" />
     <MESSAGE value="Working except for different analysis between model graphs" />
     <MESSAGE value="Differentiating between dual (non-exactly comparable) and specialized graphing functions" />
     <MESSAGE value="Adding MSE and MAE to both neural and poly as well as N vs N to poly for verification of calculations" />
@@ -580,7 +567,8 @@
     <MESSAGE value="Fixing use of quantized vs unquantized and graphs. Also added the Error_Plots.py analysis." />
     <MESSAGE value="Updating with new data and results." />
     <MESSAGE value="Reorganizing (moving NN code for simplification)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Reorganizing (moving NN code for simplification)" />
+    <MESSAGE value="More Reorganizing and Simplification" />
+    <option name="LAST_COMMIT_MESSAGE" value="More Reorganizing and Simplification" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Calibration_Programs$Graph_Raw_Instron_and_Arduino_Data.coverage" NAME="Graph Raw Instron and Arduino Data Coverage Results" MODIFIED="1729692054836" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Other Useful Programs/Additional Graphing" />
